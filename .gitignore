@@ -1,0 +1,58 @@
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# .NET and MSBuild outputs
+bin/
+obj/
+artifacts/
+TestResults/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.nupkg
+*.snupkg
+
+# WinUI and MSIX outputs
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.appinstaller
+*.cer
+*.pfx
+*.pubxml.user
+
+# Native build and generated tooling output
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build/
+generated/
+
+# Local machine and editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+*.local.json
+secrets/

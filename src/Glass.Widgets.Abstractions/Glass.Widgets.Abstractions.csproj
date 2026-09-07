@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Glass.Widgets.Abstractions</RootNamespace>
+    <AssemblyName>Glass.Widgets.Abstractions</AssemblyName>
+  </PropertyGroup>
+</Project>
