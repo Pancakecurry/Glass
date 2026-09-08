@@ -27,7 +27,7 @@ These rules apply to every future coding agent working in this repository.
 
 ## Phase discipline
 
-Phase 0A is a foundation phase. It may establish project files, small platform-independent contracts, configuration policy, tokens, documentation, and a minimal WinUI bootstrap. It must not grow taskbar UI, widget UI, settings UI, shell interop, monitor code, AppBar code, material rendering, motion infrastructure, or release packaging.
+The active branch is bounded to Phase 1 runtime, persistence, native surface, and structural taskbar foundations. Do not add widgets, final Control Center UI, the material engine, product motion, Explorer integration, or release packaging. Development controls and structural zone labels are not a visual-design precedent.
 
 Do not add browser mocks, Playwright, screenshot regression tests, screenshot-based QA infrastructure, shell emulators, fake monitor frameworks, or elaborate integration-test infrastructure.
 

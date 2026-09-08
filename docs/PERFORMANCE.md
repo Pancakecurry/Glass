@@ -6,7 +6,7 @@ Performance is a product requirement, not a later optimization pass. The eventua
 
 ## Initial aspirational budgets
 
-These are engineering goals, not claims that Phase 0A has achieved them:
+These are engineering goals, not claims that Phase 1 has achieved them:
 
 - Idle CPU below roughly 0.5 percent when realistically achievable.
 - Idle GPU effectively near zero.
@@ -33,4 +33,13 @@ These are engineering goals, not claims that Phase 0A has achieved them:
 - Treat startup, steady state, monitor changes, DPI changes, and fullscreen transitions as separate performance scenarios.
 - Keep quality-tier changes understandable to users and reversible.
 
-No performance number in this document is a benchmark result. Phase 0A creates no instrumentation framework and makes no Windows performance claim.
+## Phase 1 architecture
+
+- Display topology uses `DisplayAreaWatcher`; it is not polled.
+- Native callbacks route by message ID and return directly for unrelated messages without allocating event arguments.
+- Placement is persisted only after settled operations such as `WM_EXITSIZEMOVE`, not while the pointer moves.
+- Auto-hide uses a cancellable one-shot delay only for enabled bars; there is no cursor polling or permanent timer.
+- AppBar position callbacks reapply the last current request and are removed during deterministic disposal.
+- Hidden bars do not run animation or refresh loops in this phase.
+
+No performance number in this document is a benchmark result. Phase 1 adds no telemetry or continuous instrumentation and makes no Windows performance claim.

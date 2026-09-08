@@ -6,12 +6,12 @@ The core shell and widget experience should work offline, without an account, an
 
 ## Decision
 
-Keep product state local-first. Core exposes only a minimal local-state persistence contract. The first implementation will use simple local serialization through System.Text.Json. Network access is optional and limited to features that genuinely require it, such as weather. No backend, authentication, telemetry, analytics SDK, database, or cloud sync is part of the initial architecture.
+Keep product state local-first. Core exposes small persistence contracts and Glass.Infrastructure implements versioned System.Text.Json documents under `%LOCALAPPDATA%/Glass`, using same-directory temporary files and replacement, corrupt-file backups, and optional bounded local diagnostics. Network access is optional and limited to features that genuinely require it, such as weather. No backend, authentication, telemetry, analytics SDK, database, or cloud sync is part of the initial architecture.
 
 ## Consequences
 
 - Offline operation is a baseline rather than an exceptional mode.
-- Local state needs explicit schema versioning, atomic writes, migration, corruption handling, and user-visible recovery as it matures.
+- Local state has explicit schema versioning, atomic writes where the filesystem permits, a small migration entry point, and nonfatal corruption recovery.
 - Optional online widgets must be isolated from local shell responsiveness and availability.
 - Users avoid an account dependency and default data collection.
 

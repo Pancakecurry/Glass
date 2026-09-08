@@ -6,7 +6,7 @@ The product combines domain rules, Windows integration, native rendering, shell 
 
 ## Decision
 
-Use separate projects for Glass.Core, Glass.Widgets.Abstractions, Glass.Platform.Windows, Glass.Rendering, Glass.Shell, Glass.Widgets.BuiltIn, and Glass.App. Core is plain net10.0 and has no UI or Windows references. Widget abstractions remain platform-light and are not a third-party plugin SDK. Glass.App is the composition root, not a feature-logic container.
+Use separate projects for Glass.Core, Glass.Infrastructure, Glass.Widgets.Abstractions, Glass.Platform.Windows, Glass.Rendering, Glass.Shell, Glass.Widgets.BuiltIn, and Glass.App. Core and Infrastructure are plain net10.0; Infrastructure may reference Core but neither may reference Windows or UI projects. Widget abstractions remain platform-light and are not a third-party plugin SDK. Glass.App is the composition root, not a feature-logic container.
 
 Add project references only when source code requires them. The allowed future direction is Core toward platform and features, widget contracts toward trusted consumers, and the app toward composition.
 

@@ -6,7 +6,7 @@ The eventual product should have a straightforward single-installation experienc
 
 ## Decision
 
-Treat MSIX or MSIXBundle as the leading future distribution direction. Defer the final packaging model, signing, update channel, runtime deployment mode, architecture bundles, and store or direct-distribution choice until a Windows deployment spike can test them. Phase 0A uses an unpackaged WinUI bootstrap and does not produce release packages.
+Treat MSIX or MSIXBundle as the leading future distribution direction. Defer the final packaging model, signing, update channel, runtime deployment mode, architecture bundles, and store or direct-distribution choice until a Windows deployment spike can test them. Phase 1 remains unpackaged and does not produce release packages.
 
 ## Consequences
 

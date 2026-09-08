@@ -4,7 +4,7 @@
 
 Glass is a native Windows shell-enhancement product, not an Explorer replacement. Its eventual experience centers on a freely positionable and resizable custom taskbar or dock, native desktop widgets, a sophisticated translucent material system, and high-quality motion. It must remain lightweight, local-first, private, and useful without an account or an internet connection.
 
-Phase 0A establishes architecture only. None of the shell surfaces, widgets, settings, materials, or interaction systems described below are implemented here.
+Phase 1 implements only the runtime, persistence, structural bar-surface, placement, AppBar, snapping, and auto-hide foundations. It does not implement the product taskbar content, widgets, final settings experience, materials, or polished interactions described below.
 
 ## Initial release boundary
 
@@ -82,4 +82,4 @@ Weather and other internet-dependent features must be optional, isolated, and in
 
 ## Scope rules
 
-Any feature proposal must explain its user value, privacy impact, Windows compatibility impact, performance cost, and ownership within the project boundaries. A roadmap item is not permission to implement it during Phase 0A.
+Any feature proposal must explain its user value, privacy impact, Windows compatibility impact, performance cost, and ownership within the project boundaries. A roadmap item is not permission to implement it before its orchestrated phase.

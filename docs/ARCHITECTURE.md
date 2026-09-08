@@ -28,15 +28,17 @@ The arrows describe allowed direction, not a request to add references preemptiv
 | Project | Target | Responsibility | Current direct references |
 | --- | --- | --- | --- |
 | Glass.Core | net10.0 | Pure domain models, platform-independent geometry, and local-state contracts | None |
+| Glass.Infrastructure | net10.0 | Versioned JSON documents, atomic local files, corruption recovery, and local diagnostics | Glass.Core |
 | Glass.Widgets.Abstractions | net10.0 | Minimal widget identity, metadata, sizing, capability, and instance-configuration contracts | None |
 | Glass.Platform.Windows | net10.0-windows10.0.17763.0 | HWND/AppWindow access, native messages, displays, DPI conversion, AppBar, and media sessions | Glass.Core, Microsoft.WindowsAppSDK |
 | Glass.Rendering | net10.0-windows10.0.17763.0 | Small Microsoft.UI.Composition animation proof; future materials and motion remain deferred | Microsoft.WindowsAppSDK |
-| Glass.Shell | net10.0-windows10.0.17763.0 | Probe surface floating/docked coordination | Glass.Core, Glass.Platform.Windows |
+| Glass.Shell | net10.0-windows10.0.17763.0 | Shell runtime, bar-surface lifecycle, placement, snapping integration, and auto-hide | Glass.Core, Glass.Platform.Windows, Glass.Rendering, Glass.Widgets.Abstractions |
 | Glass.Widgets.BuiltIn | net10.0-windows10.0.17763.0 | Trusted first-party widget implementations | Glass.Widgets.Abstractions |
 | Glass.App | net10.0-windows10.0.17763.0 | WinUI executable, bootstrap, lifecycle, and top-level composition | All feature and contract projects |
 | Glass.Core.Tests | net10.0 | Small deterministic tests for Core | Glass.Core |
+| Glass.Infrastructure.Tests | net10.0 | Deterministic state-store, schema, and recovery tests | Glass.Core, Glass.Infrastructure |
 
-Phase 0B activates only the Windows primitives needed for its bounded feasibility spike. It does not create the final taskbar, widget host, material engine, monitor-layout engine, or settings architecture.
+Phase 1 promotes the successful Phase 0B display, message-routing, AppBar, and window findings into one production surface path. It does not implement widgets, the final Control Center, the material engine, product motion, or release packaging.
 
 ## Allowed future edges
 
@@ -61,13 +63,21 @@ No project may introduce a reverse reference from Core or widget contracts to Wi
 
 ## State and persistence
 
-Core owns only the persistence contract. The first storage implementation should remain local, explicit, and replaceable. System.Text.Json is the initial serialization choice; it should live at the persistence boundary rather than leak a database or network model into Core. Layout, widget instance configuration, preferences, and presets must be locally understandable and recoverable.
-
-State writes should be deliberate and resilient. Later work must define schema versioning, corruption handling, atomic writes, and migration before treating persisted state as stable.
+Core owns the state contracts and domain documents. Glass.Infrastructure implements deterministic System.Text.Json serialization under `%LOCALAPPDATA%/Glass`, same-directory temporary writes followed by replacement, explicit schema versions, a small migration entry point, timestamped corrupt-input backups, and local diagnostics. Infrastructure is plain `net10.0` and cannot reference Windows or the app. Shell state is written only after create/remove/configuration operations, completed native move/resize operations, and display recovery—not during pointer movement.
 
 ## Application composition
 
-Glass.App creates the TechnicalSpikeWindow composition root and, on demand, a ProbeBarWindow. The app owns platform-service lifetimes and marshals service events to its DispatcherQueue. Reusable Win32, display, media, rendering, and placement logic remains in its owning project. Product-facing strings remain centralized in Glass.App/Configuration/ProductBranding.cs.
+Glass.App explicitly composes `ApplicationRuntime`, the local stores, `WindowsDisplayService`, `ShellRuntime`, the bar-window factory, and the development controls window. `ApplicationRuntime` retains top-level ownership and coordinates deterministic shutdown. `ShellRuntime` owns bar definitions and active surface instances. App-instance redirection is handled with Windows App SDK `AppInstance`; reusable lifecycle and surface logic remains outside `App.xaml.cs`. Product-facing strings remain centralized in `Glass.App/Configuration/ProductBranding.cs`.
+
+## Forbidden dependency edges
+
+- Glass.Core and Glass.Infrastructure must not reference Windows, WinUI, Windows App SDK, rendering, shell, or application projects.
+- Glass.Platform.Windows must not reference Shell, Rendering, Infrastructure, Widgets, or App.
+- Glass.Rendering must not reference Platform.Windows, Shell, Infrastructure, Widgets, or App.
+- Glass.Shell may consume Core, Platform.Windows, Rendering, and Widgets.Abstractions; it must not reference Infrastructure or App.
+- Glass.Widgets.BuiltIn must not reference Shell or App.
+- Glass.App is the composition root; no project may reference it.
+- Circular references and parallel surface engines are forbidden.
 
 ## Configuration policy
 

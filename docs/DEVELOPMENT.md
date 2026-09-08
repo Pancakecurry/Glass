@@ -2,7 +2,7 @@
 
 ## Current workflow
 
-Phase 0A established the repository and architecture foundation. Phase 0B is limited to the Windows technical-feasibility surface described in TECHNICAL_SPIKE.md.
+Phase 0A established the repository and Phase 0B proved bounded Windows feasibility. Phase 1 builds the runtime, persisted shell layout, and first production bar-surface path. `TECHNICAL_SPIKE.md` is historical evidence, not the active architecture.
 
 - Project and dependency boundaries.
 - Small platform-independent contracts.
@@ -11,7 +11,7 @@ Phase 0A established the repository and architecture foundation. Phase 0B is lim
 - Product, architecture, performance, privacy, compatibility, and accessibility documentation.
 - The minimal WinUI application bootstrap.
 
-Do not extend the Phase 0B probe into product taskbar UI, widget UI, settings UI, a material engine, release packaging, browser mocks, screenshot infrastructure, Playwright, or elaborate integration tests.
+Do not extend the development controls or structural bar zones into final product UI, widgets, the material engine, release packaging, browser mocks, screenshot infrastructure, Playwright, or elaborate integration tests.
 
 ## Toolchain
 
@@ -26,9 +26,10 @@ From the repository root on Windows:
     dotnet restore Glass.sln
     dotnet build Glass.sln -c Debug -p:Platform=x64
     dotnet test tests/Glass.Core.Tests/Glass.Core.Tests.csproj -c Debug
+    dotnet test tests/Glass.Infrastructure.Tests/Glass.Infrastructure.Tests.csproj -c Debug
     dotnet run --project src/Glass.App/Glass.App.csproj -c Debug -p:Platform=x64
 
-These are intended commands, not Phase 0A validation results from macOS.
+These are intended Windows commands, not runtime-validation results from macOS.
 
 ## Reading order
 
@@ -44,4 +45,4 @@ Pure Core tests may run cross-platform when the matching SDK is available. Windo
 
 ## Future packaging
 
-Release packaging is intentionally not implemented in Phase 0A. The leading future direction is MSIX or MSIXBundle as a single-installation experience; packaging decisions are recorded in ADR 006 and must be revisited with real Windows deployment testing.
+Release packaging is intentionally not implemented in Phase 1. The leading future direction is MSIX or MSIXBundle as a single-installation experience; ADR 006 remains subject to real Windows deployment testing.
