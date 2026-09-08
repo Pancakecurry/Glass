@@ -29,14 +29,14 @@ The arrows describe allowed direction, not a request to add references preemptiv
 | --- | --- | --- | --- |
 | Glass.Core | net10.0 | Pure domain models, platform-independent geometry, and local-state contracts | None |
 | Glass.Widgets.Abstractions | net10.0 | Minimal widget identity, metadata, sizing, capability, and instance-configuration contracts | None |
-| Glass.Platform.Windows | net10.0-windows10.0.17763.0 | Win32/WinRT, monitors, DPI, windows, media, system status, AppBar, and shell integration boundary | None in Phase 0A |
-| Glass.Rendering | net10.0-windows10.0.17763.0 | Future Microsoft.UI.Composition helpers, materials, shadows, motion, and visual-state primitives | None in Phase 0A |
-| Glass.Shell | net10.0-windows10.0.17763.0 | Future desktop surfaces, dock layout, placement, snapping, auto-hide, edit mode, and lifecycle | None in Phase 0A |
+| Glass.Platform.Windows | net10.0-windows10.0.17763.0 | HWND/AppWindow access, native messages, displays, DPI conversion, AppBar, and media sessions | Glass.Core, Microsoft.WindowsAppSDK |
+| Glass.Rendering | net10.0-windows10.0.17763.0 | Small Microsoft.UI.Composition animation proof; future materials and motion remain deferred | Microsoft.WindowsAppSDK |
+| Glass.Shell | net10.0-windows10.0.17763.0 | Probe surface floating/docked coordination | Glass.Core, Glass.Platform.Windows |
 | Glass.Widgets.BuiltIn | net10.0-windows10.0.17763.0 | Trusted first-party widget implementations | Glass.Widgets.Abstractions |
 | Glass.App | net10.0-windows10.0.17763.0 | WinUI executable, bootstrap, lifecycle, and top-level composition | All feature and contract projects |
 | Glass.Core.Tests | net10.0 | Small deterministic tests for Core | Glass.Core |
 
-The Windows-specific project references deliberately contain no OS implementation in this phase. Their Windows target and boundaries are prepared without pretending that shell, DPI, monitor, WinRT, or composition behavior exists.
+Phase 0B activates only the Windows primitives needed for its bounded feasibility spike. It does not create the final taskbar, widget host, material engine, monitor-layout engine, or settings architecture.
 
 ## Allowed future edges
 
@@ -67,7 +67,7 @@ State writes should be deliberate and resilient. Later work must define schema v
 
 ## Application composition
 
-Glass.App currently creates a single development window and activates it. It references the feature projects so the composition root is visible, but it does not instantiate shell surfaces, widgets, platform services, or rendering systems yet. Product-facing strings are centralized in Glass.App/Configuration/ProductBranding.cs.
+Glass.App creates the TechnicalSpikeWindow composition root and, on demand, a ProbeBarWindow. The app owns platform-service lifetimes and marshals service events to its DispatcherQueue. Reusable Win32, display, media, rendering, and placement logic remains in its owning project. Product-facing strings remain centralized in Glass.App/Configuration/ProductBranding.cs.
 
 ## Configuration policy
 

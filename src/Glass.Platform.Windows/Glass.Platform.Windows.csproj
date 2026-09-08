@@ -6,5 +6,14 @@
     <RootNamespace>Glass.Platform.Windows</RootNamespace>
     <AssemblyName>Glass.Platform.Windows</AssemblyName>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Glass.Core\Glass.Core.csproj" />
+  </ItemGroup>
 </Project>

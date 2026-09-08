@@ -36,4 +36,6 @@
 - Do not modify undocumented shell internals in initial releases.
 - Prefer documented Win32, WinRT, Windows App SDK, and AppBar mechanisms when later work requires OS integration.
 
-Phase 0A introduces no network, account, telemetry, authentication, or privileged behavior.
+Phase 0B adds local access to media sessions already exposed by Windows so a future trusted media widget can display and control the user's active playback. The future packaged path declares only the globalMediaControl capability for this purpose. This access is not telemetry, sends no data, and requires no Glass account.
+
+The technical spike introduces no network, account, telemetry, authentication, arbitrary plugin execution, or privileged behavior.

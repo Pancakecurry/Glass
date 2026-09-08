@@ -7,4 +7,9 @@
     <AssemblyName>Glass.Shell</AssemblyName>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Glass.Core\Glass.Core.csproj" />
+    <ProjectReference Include="..\Glass.Platform.Windows\Glass.Platform.Windows.csproj" />
+  </ItemGroup>
 </Project>

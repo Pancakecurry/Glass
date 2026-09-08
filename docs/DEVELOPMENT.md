@@ -1,8 +1,8 @@
 # Development
 
-## Phase 0A workflow
+## Current workflow
 
-Phase 0A is the repository and architecture foundation. Work in this phase is limited to:
+Phase 0A established the repository and architecture foundation. Phase 0B is limited to the Windows technical-feasibility surface described in TECHNICAL_SPIKE.md.
 
 - Project and dependency boundaries.
 - Small platform-independent contracts.
@@ -11,7 +11,7 @@ Phase 0A is the repository and architecture foundation. Work in this phase is li
 - Product, architecture, performance, privacy, compatibility, and accessibility documentation.
 - The minimal WinUI application bootstrap.
 
-Do not add taskbar UI, widget UI, settings UI, shell interop, monitor code, AppBar code, composition effects, a motion engine, packaging, browser mocks, screenshot infrastructure, Playwright, or elaborate integration tests.
+Do not extend the Phase 0B probe into product taskbar UI, widget UI, settings UI, a material engine, release packaging, browser mocks, screenshot infrastructure, Playwright, or elaborate integration tests.
 
 ## Toolchain
 

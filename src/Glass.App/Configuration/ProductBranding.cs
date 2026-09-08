@@ -7,6 +7,9 @@ namespace Glass.App.Configuration;
 internal static class ProductBranding
 {
     public const string EngineeringCodename = "Glass";
-    public const string DevelopmentWindowTitle =
-        EngineeringCodename + " — Development Placeholder";
+    public const string TechnicalSpikeWindowTitle =
+        EngineeringCodename + " — Windows Technical Spike";
+
+    public const string TechnicalProbeWindowTitle =
+        EngineeringCodename + " — Technical Probe";
 }
