@@ -1,0 +1,25 @@
+<Window
+    x:Class="Glass.App.BarWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid
+        x:Name="Root"
+        Background="Transparent"
+        PointerEntered="Root_PointerEntered"
+        PointerExited="Root_PointerExited">
+        <StackPanel x:Name="ZonePanel" Spacing="8" Padding="8">
+            <Border x:Name="DragRegion" Padding="12,6" Background="#22000000" CornerRadius="4">
+                <TextBlock Text="Glass bar — development surface" />
+            </Border>
+            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
+                <TextBlock Text="Start zone" />
+            </Border>
+            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
+                <TextBlock Text="Center zone" />
+            </Border>
+            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
+                <TextBlock Text="End zone" />
+            </Border>
+        </StackPanel>
+    </Grid>
+</Window>

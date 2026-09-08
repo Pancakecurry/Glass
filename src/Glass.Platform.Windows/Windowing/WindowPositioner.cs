@@ -26,6 +26,23 @@ public static partial class WindowPositioner
         return checked((int)Math.Round(dips * dpi / DefaultDpi));
     }
 
+    public static double PixelsToDips(int pixels, uint dpi) =>
+        pixels * DefaultDpi / (double)(dpi == 0 ? DefaultDpi : dpi);
+
+    public static RectInt32 GetBounds(nint hwnd)
+    {
+        if (!GetWindowRect(hwnd, out var rectangle))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+
+        return new RectInt32(
+            rectangle.Left,
+            rectangle.Top,
+            checked(rectangle.Right - rectangle.Left),
+            checked(rectangle.Bottom - rectangle.Top));
+    }
+
     public static void MoveAndResize(nint hwnd, RectInt32 bounds)
     {
         if (bounds.Width <= 0 || bounds.Height <= 0)
@@ -79,4 +96,17 @@ public static partial class WindowPositioner
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool ShowWindow(nint hwnd, int command);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(nint hwnd, out NativeRect rectangle);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
 }

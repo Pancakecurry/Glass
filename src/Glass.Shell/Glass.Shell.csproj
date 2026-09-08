@@ -11,5 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Glass.Core\Glass.Core.csproj" />
     <ProjectReference Include="..\Glass.Platform.Windows\Glass.Platform.Windows.csproj" />
+    <ProjectReference Include="..\Glass.Rendering\Glass.Rendering.csproj" />
+    <ProjectReference Include="..\Glass.Widgets.Abstractions\Glass.Widgets.Abstractions.csproj" />
   </ItemGroup>
 </Project>

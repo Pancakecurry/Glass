@@ -1,5 +1,6 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
+using Glass.Core.Placement;
 using Windows.Graphics;
 
 namespace Glass.Platform.Windows.Displays;
@@ -63,6 +64,44 @@ public sealed class WindowsDisplayService : IDisposable
     public DisplayInfo? Find(DisplayId displayId) =>
         _displays.FirstOrDefault(display => display.Id == displayId);
 
+    public DisplayInfo Resolve(DisplayTarget target)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(target);
+
+        var exact = _displays.FirstOrDefault(display =>
+            string.Equals(display.PersistentId, target.PersistentId, StringComparison.Ordinal));
+        if (exact is not null)
+        {
+            return exact;
+        }
+
+        var equivalent = _displays
+            .Select(display => new
+            {
+                Display = display,
+                Overlap = IntersectionArea(display.Bounds, target.LastKnownBounds),
+            })
+            .OrderByDescending(candidate => candidate.Overlap)
+            .FirstOrDefault(candidate => candidate.Overlap > 0)?.Display;
+        if (equivalent is not null)
+        {
+            return equivalent;
+        }
+
+        return target.WasPrimary ? PrimaryDisplay : _displays.FirstOrDefault() ?? PrimaryDisplay;
+    }
+
+    public static DisplayTarget ToTarget(DisplayInfo display) =>
+        new(
+            display.PersistentId,
+            display.IsPrimary,
+            new NativePixelRect(
+                display.Bounds.X,
+                display.Bounds.Y,
+                display.Bounds.Width,
+                display.Bounds.Height));
+
     public void Dispose()
     {
         if (_disposed)
@@ -90,10 +129,20 @@ public sealed class WindowsDisplayService : IDisposable
 
         return new DisplayInfo(
             area.DisplayId,
+            area.DisplayId.Value.ToString("X16", System.Globalization.CultureInfo.InvariantCulture),
             area.IsPrimary ? "Primary display" : $"Display {area.DisplayId}",
             area.IsPrimary,
             bounds,
             workArea);
+    }
+
+    private static long IntersectionArea(RectInt32 left, NativePixelRect right)
+    {
+        var width = Math.Max(0, Math.Min(left.X + left.Width, right.X + right.Width) -
+            Math.Max(left.X, right.X));
+        var height = Math.Max(0, Math.Min(left.Y + left.Height, right.Y + right.Height) -
+            Math.Max(left.Y, right.Y));
+        return (long)width * height;
     }
 
     private void OnDisplayChanged(DisplayAreaWatcher sender, DisplayArea args)

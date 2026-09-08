@@ -32,3 +32,6 @@ jobs:
 
       - name: Test Core
         run: dotnet test tests/Glass.Core.Tests/Glass.Core.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Infrastructure
+        run: dotnet test tests/Glass.Infrastructure.Tests/Glass.Infrastructure.Tests.csproj --configuration Release --no-restore

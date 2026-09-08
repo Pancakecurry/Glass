@@ -1,3 +1,4 @@
+using Glass.Core.Geometry;
 using Glass.Core.Placement;
 using Xunit;
 
@@ -6,24 +7,35 @@ namespace Glass.Core.Tests;
 public sealed class SurfacePlacementTests
 {
     [Fact]
-    public void FloatingPlacementHasNoEdge()
+    public void PlacementKindsCarryOnlyTheirValidData()
     {
-        var placement = SurfacePlacement.Floating;
+        var target = DisplayTarget.PrimaryFallback;
+        SurfacePlacement floating = new FloatingPlacement(
+            target,
+            new LogicalRect(10, 20, 300, 40));
+        SurfacePlacement anchored = new AnchoredPlacement(
+            target,
+            ScreenEdge.Bottom,
+            24,
+            new LogicalSize(300, 40));
+        SurfacePlacement docked = new DockedPlacement(
+            target,
+            ScreenEdge.Bottom,
+            40);
 
-        Assert.Equal(SurfacePlacementMode.Floating, placement.Mode);
-        Assert.Null(placement.Edge);
+        Assert.IsType<FloatingPlacement>(floating);
+        Assert.Equal(24, Assert.IsType<AnchoredPlacement>(anchored).AlongEdgeOffset);
+        Assert.Equal(40, Assert.IsType<DockedPlacement>(docked).Thickness);
     }
 
-    [Theory]
-    [InlineData(DockEdge.Top)]
-    [InlineData(DockEdge.Bottom)]
-    [InlineData(DockEdge.Left)]
-    [InlineData(DockEdge.Right)]
-    public void DockedPlacementCarriesItsEdge(DockEdge edge)
+    [Fact]
+    public void PlacementRejectsImpossibleDimensions()
     {
-        var placement = SurfacePlacement.Docked(edge);
-
-        Assert.Equal(SurfacePlacementMode.Docked, placement.Mode);
-        Assert.Equal(edge, placement.Edge);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new FloatingPlacement(
+                DisplayTarget.PrimaryFallback,
+                new LogicalRect(0, 0, -1, 40)));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new DockedPlacement(DisplayTarget.PrimaryFallback, ScreenEdge.Left, 0));
     }
 }

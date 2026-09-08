@@ -16,14 +16,14 @@ public sealed partial class AppBarController : IDisposable
     private const uint AbnPosChanged = 0x00000001;
 
     private readonly nint _hwnd;
-    private readonly NativeWindowMessageHook _messageHook;
+    private readonly IDisposable _callbackRegistration;
     private readonly uint _callbackMessage;
     private DockRequest? _lastRequest;
     private bool _registered;
     private bool _positioning;
     private bool _disposed;
 
-    public AppBarController(nint hwnd)
+    public AppBarController(nint hwnd, NativeWindowMessageRouter messageRouter)
     {
         if (hwnd == 0)
         {
@@ -31,6 +31,7 @@ public sealed partial class AppBarController : IDisposable
         }
 
         _hwnd = hwnd;
+        ArgumentNullException.ThrowIfNull(messageRouter);
         _callbackMessage = RegisterWindowMessage(
             $"Glass.AppBar.Callback.{Environment.ProcessId}.{hwnd:X}");
         if (_callbackMessage == 0)
@@ -38,15 +39,14 @@ public sealed partial class AppBarController : IDisposable
             throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 
-        _messageHook = new NativeWindowMessageHook(hwnd);
-        _messageHook.MessageReceived += OnMessageReceived;
+        _callbackRegistration = messageRouter.Register(_callbackMessage, OnAppBarMessage);
     }
 
     public bool IsRegistered => _registered;
 
     public event EventHandler? RegistrationChanged;
 
-    public RectInt32 Dock(DisplayInfo display, DockEdge edge, int thicknessPixels)
+    public RectInt32 Dock(DisplayInfo display, ScreenEdge edge, int thicknessPixels)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(display);
@@ -55,6 +55,7 @@ public sealed partial class AppBarController : IDisposable
 
         Register();
         _lastRequest = new DockRequest(display, edge, thicknessPixels);
+        var previousBounds = WindowPositioner.GetBounds(_hwnd);
 
         try
         {
@@ -63,6 +64,7 @@ public sealed partial class AppBarController : IDisposable
         catch
         {
             Unregister();
+            WindowPositioner.MoveAndResize(_hwnd, previousBounds);
             throw;
         }
     }
@@ -91,8 +93,7 @@ public sealed partial class AppBarController : IDisposable
 
         Unregister();
         _disposed = true;
-        _messageHook.MessageReceived -= OnMessageReceived;
-        _messageHook.Dispose();
+        _callbackRegistration.Dispose();
         RegistrationChanged = null;
     }
 
@@ -146,16 +147,20 @@ public sealed partial class AppBarController : IDisposable
         }
     }
 
-    private void OnMessageReceived(
-        object? sender,
-        NativeWindowMessageEventArgs args)
+    public void Reapply(DisplayInfo display)
     {
-        if (args.Message != _callbackMessage)
+        if (_lastRequest is null)
         {
             return;
         }
 
-        if ((uint)args.WParam == AbnPosChanged &&
+        _lastRequest = _lastRequest with { Display = display };
+        _ = ApplyPosition(_lastRequest);
+    }
+
+    private bool OnAppBarMessage(nuint wParam, nint lParam, out nint result)
+    {
+        if ((uint)wParam == AbnPosChanged &&
             _registered &&
             _lastRequest is not null &&
             !_positioning)
@@ -163,7 +168,8 @@ public sealed partial class AppBarController : IDisposable
             _ = ApplyPosition(_lastRequest);
         }
 
-        args.Handled = true;
+        result = 0;
+        return true;
     }
 
     private AppBarData CreateData() =>
@@ -175,21 +181,21 @@ public sealed partial class AppBarController : IDisposable
 
     private static NativeRect ConstrainThickness(
         NativeRect rectangle,
-        DockEdge edge,
+        ScreenEdge edge,
         int thickness)
     {
         switch (edge)
         {
-            case DockEdge.Left:
+            case ScreenEdge.Left:
                 rectangle.Right = checked(rectangle.Left + thickness);
                 break;
-            case DockEdge.Right:
+            case ScreenEdge.Right:
                 rectangle.Left = checked(rectangle.Right - thickness);
                 break;
-            case DockEdge.Top:
+            case ScreenEdge.Top:
                 rectangle.Bottom = checked(rectangle.Top + thickness);
                 break;
-            case DockEdge.Bottom:
+            case ScreenEdge.Bottom:
                 rectangle.Top = checked(rectangle.Bottom - thickness);
                 break;
             default:
@@ -199,13 +205,13 @@ public sealed partial class AppBarController : IDisposable
         return rectangle;
     }
 
-    private static uint ToNativeEdge(DockEdge edge) =>
+    private static uint ToNativeEdge(ScreenEdge edge) =>
         edge switch
         {
-            DockEdge.Left => 0,
-            DockEdge.Top => 1,
-            DockEdge.Right => 2,
-            DockEdge.Bottom => 3,
+            ScreenEdge.Left => 0,
+            ScreenEdge.Top => 1,
+            ScreenEdge.Right => 2,
+            ScreenEdge.Bottom => 3,
             _ => throw new ArgumentOutOfRangeException(nameof(edge)),
         };
 
@@ -258,6 +264,6 @@ public sealed partial class AppBarController : IDisposable
 
     private sealed record DockRequest(
         DisplayInfo Display,
-        DockEdge Edge,
+        ScreenEdge Edge,
         int ThicknessPixels);
 }

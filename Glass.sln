@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.App", "src\Glass.App\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Core", "src\Glass.Core\Glass.Core.csproj", "{1615B2B7-0B86-4C06-BF0A-B7D8EF8ED2A6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Infrastructure", "src\Glass.Infrastructure\Glass.Infrastructure.csproj", "{6279C586-8D3D-4E47-90EE-20B752DE4929}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Platform.Windows", "src\Glass.Platform.Windows\Glass.Platform.Windows.csproj", "{F32A6A3A-81AB-4F44-9C58-BB93B911D54B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Rendering", "src\Glass.Rendering\Glass.Rendering.csproj", "{B86B9E40-9CEB-4AD7-A05C-EF1B37E879FA}"
@@ -17,6 +19,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Widgets.BuiltIn", "src\Glass.Widgets.BuiltIn\Glass.Widgets.BuiltIn.csproj", "{C96A61E6-5B90-469E-BF20-8D62C36C39AB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Core.Tests", "tests\Glass.Core.Tests\Glass.Core.Tests.csproj", "{3F7918C7-83CB-42A1-9F52-0B4F7BB5DA3C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glass.Infrastructure.Tests", "tests\Glass.Infrastructure.Tests\Glass.Infrastructure.Tests.csproj", "{E2183ED1-CB28-4D51-AF17-C2E7AE6EE9FA}"
 EndProject
 Global
     GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +36,10 @@ Global
         {1615B2B7-0B86-4C06-BF0A-B7D8EF8ED2A6}.Debug|Any CPU.Build.0 = Debug|AnyCPU
         {1615B2B7-0B86-4C06-BF0A-B7D8EF8ED2A6}.Release|Any CPU.ActiveCfg = Release|AnyCPU
         {1615B2B7-0B86-4C06-BF0A-B7D8EF8ED2A6}.Release|Any CPU.Build.0 = Release|AnyCPU
+        {6279C586-8D3D-4E47-90EE-20B752DE4929}.Debug|Any CPU.ActiveCfg = Debug|AnyCPU
+        {6279C586-8D3D-4E47-90EE-20B752DE4929}.Debug|Any CPU.Build.0 = Debug|AnyCPU
+        {6279C586-8D3D-4E47-90EE-20B752DE4929}.Release|Any CPU.ActiveCfg = Release|AnyCPU
+        {6279C586-8D3D-4E47-90EE-20B752DE4929}.Release|Any CPU.Build.0 = Release|AnyCPU
         {F32A6A3A-81AB-4F44-9C58-BB93B911D54B}.Debug|Any CPU.ActiveCfg = Debug|AnyCPU
         {F32A6A3A-81AB-4F44-9C58-BB93B911D54B}.Debug|Any CPU.Build.0 = Debug|AnyCPU
         {F32A6A3A-81AB-4F44-9C58-BB93B911D54B}.Release|Any CPU.ActiveCfg = Release|AnyCPU
@@ -56,6 +64,10 @@ Global
         {3F7918C7-83CB-42A1-9F52-0B4F7BB5DA3C}.Debug|Any CPU.Build.0 = Debug|AnyCPU
         {3F7918C7-83CB-42A1-9F52-0B4F7BB5DA3C}.Release|Any CPU.ActiveCfg = Release|AnyCPU
         {3F7918C7-83CB-42A1-9F52-0B4F7BB5DA3C}.Release|Any CPU.Build.0 = Release|AnyCPU
+        {E2183ED1-CB28-4D51-AF17-C2E7AE6EE9FA}.Debug|Any CPU.ActiveCfg = Debug|AnyCPU
+        {E2183ED1-CB28-4D51-AF17-C2E7AE6EE9FA}.Debug|Any CPU.Build.0 = Debug|AnyCPU
+        {E2183ED1-CB28-4D51-AF17-C2E7AE6EE9FA}.Release|Any CPU.ActiveCfg = Release|AnyCPU
+        {E2183ED1-CB28-4D51-AF17-C2E7AE6EE9FA}.Release|Any CPU.Build.0 = Release|AnyCPU
     EndGlobalSection
     GlobalSection(SolutionProperties) = preSolution
         HideSolutionNode = FALSE
