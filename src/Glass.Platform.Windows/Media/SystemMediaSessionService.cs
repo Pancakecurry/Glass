@@ -239,7 +239,7 @@ public sealed class SystemMediaSessionService : IDisposable
     }
 
     private static async Task<byte[]?> ReadArtworkAsync(
-        RandomAccessStreamReference? reference)
+        IRandomAccessStreamReference? reference)
     {
         if (reference is null) return null;
         using var stream = await reference.OpenReadAsync();

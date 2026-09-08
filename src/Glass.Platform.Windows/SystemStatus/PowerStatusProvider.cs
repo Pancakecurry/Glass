@@ -27,16 +27,26 @@ public sealed class PowerStatusProvider : IDisposable
 
     public ValueTask StopAsync(CancellationToken cancellationToken = default)
     {
-        if (!_started) return ValueTask.CompletedTask;
-        PowerManager.RemainingChargePercentChanged -= OnChanged;
-        PowerManager.BatteryStatusChanged -= OnChanged;
-        PowerManager.EnergySaverStatusChanged -= OnChanged;
-        PowerManager.PowerSupplyStatusChanged -= OnChanged;
-        _started = false;
+        cancellationToken.ThrowIfCancellationRequested();
+        Stop();
         return ValueTask.CompletedTask;
     }
 
-    public void Dispose() { _ = StopAsync(); Changed = null; }
+    public void Dispose()
+    {
+        Stop();
+        Changed = null;
+    }
+
+    private void Stop()
+    {
+        if (!_started) return;
+        PowerManager.BatteryStatusChanged -= OnChanged;
+        PowerManager.EnergySaverStatusChanged -= OnChanged;
+        PowerManager.PowerSupplyStatusChanged -= OnChanged;
+        PowerManager.RemainingChargePercentChanged -= OnChanged;
+        _started = false;
+    }
     private void OnChanged(object? sender, object? args)
     {
         Current = Read();

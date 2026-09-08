@@ -63,8 +63,9 @@ public sealed partial class ShellIconService : IDisposable
         public long LastAccess { get; set; } = lastAccess;
     }
 
-    private sealed class SafeIconHandle(nint handle) : SafeHandleZeroOrMinusOneIsInvalid(true)
+    private sealed class SafeIconHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
+        public SafeIconHandle(nint value) : base(true) => SetHandle(value);
         protected override bool ReleaseHandle() => DestroyIcon(handle);
     }
 

@@ -23,7 +23,7 @@ public sealed partial class ClipboardService : IDisposable
 
     public async ValueTask<string?> TryReadTextAsync()
     {
-        var content = Clipboard.GetContent();
+        var content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
         return content.Contains(StandardDataFormats.Text) ? await content.GetTextAsync() : null;
     }
 
