@@ -1,5 +1,6 @@
 using Glass.Core.Geometry;
 using Glass.Core.Placement;
+using Glass.Core.Appearance;
 
 namespace Glass.Core.Shell;
 
@@ -30,6 +31,10 @@ public sealed record BarDefinition(
     SurfaceZOrder ZOrder,
     bool IsEnabled)
 {
+    public string Name { get; init; } = "Glass Bar";
+
+    public BarVisualMode VisualMode { get; init; } = BarVisualMode.Unified;
+
     public IReadOnlyList<BarContentItem> Content { get; init; } =
         [new RunningApplicationsSlotBarItem(BarZone.Center)];
 
@@ -50,6 +55,7 @@ public sealed record BarDefinition(
         var content = NormalizeContent(Content);
         return this with
         {
+            Name = string.IsNullOrWhiteSpace(Name) ? "Glass Bar" : Name.Trim(),
             Length = Math.Clamp(
                 double.IsFinite(Length) ? Length : MinimumLength,
                 MinimumLength,
@@ -94,11 +100,11 @@ public sealed record BarDefinition(
                 target,
                 ScreenEdge.Bottom,
                 0.5,
-                new LogicalSize(640, 48)),
+                new LogicalSize(640, 52)),
             BarOrientation.Horizontal,
             BarLengthMode.FitContent,
             640,
-            48,
+            52,
             [BarZone.Start, BarZone.Center, BarZone.End],
             false,
             SurfaceZOrder.AlwaysOnTop,

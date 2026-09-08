@@ -30,7 +30,10 @@ public sealed record StandaloneWidgetDefinition(
     Placement.SurfacePlacement Placement,
     Geometry.LogicalSize Size,
     SurfaceZOrder ZOrder,
-    bool IsEnabled);
+    bool IsEnabled)
+{
+    public bool IsLocked { get; init; }
+}
 
 public sealed record WidgetInstanceDefinition(
     Guid WidgetInstanceId,
