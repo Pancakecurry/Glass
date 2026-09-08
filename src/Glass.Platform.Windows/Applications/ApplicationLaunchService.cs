@@ -44,6 +44,13 @@ public sealed partial class ApplicationLaunchService
     public void OpenSoundSettings() =>
         _ = ShellExecute(0, "open", "ms-settings:sound", null, null, SwShowNormal);
 
+    public void OpenPath(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if ((nint)ShellExecute(0, "open", path, null, null, SwShowNormal) <= 32)
+            throw new InvalidOperationException($"Windows could not open '{path}'.");
+    }
+
     [LibraryImport("shell32.dll", EntryPoint = "ShellExecuteW", StringMarshalling = StringMarshalling.Utf16)]
     private static partial nint ShellExecute(nint hwnd, string operation, string file,
         string? parameters, string? directory, int showCommand);

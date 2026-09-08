@@ -26,7 +26,7 @@ public sealed class CountdownTimer(TimeProvider timeProvider)
 
     public void Start(TimeSpan duration)
     {
-        if (duration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(duration));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(duration, TimeSpan.Zero);
         State = new(duration, duration, timeProvider.GetUtcNow() + duration);
     }
 

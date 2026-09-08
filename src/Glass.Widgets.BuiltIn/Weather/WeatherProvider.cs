@@ -23,7 +23,7 @@ public interface IWeatherProvider
     ValueTask ClearCacheAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed class MetNorwayWeatherProvider : IWeatherProvider
+public sealed class MetNorwayWeatherProvider : IWeatherProvider, IDisposable
 {
     private const string CacheKey = "weather-cache";
     private readonly HttpClient _client;
@@ -38,7 +38,7 @@ public sealed class MetNorwayWeatherProvider : IWeatherProvider
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _timeProvider = timeProvider ?? TimeProvider.System;
-        if (!_client.DefaultRequestHeaders.UserAgent.Any())
+        if (_client.DefaultRequestHeaders.UserAgent.Count == 0)
             _client.DefaultRequestHeaders.UserAgent.ParseAdd(
                 "Glass/0.2 (+https://github.com/Pancakecurry/Glass)");
     }
@@ -92,6 +92,8 @@ public sealed class MetNorwayWeatherProvider : IWeatherProvider
 
     public ValueTask ClearCacheAsync(CancellationToken cancellationToken = default) =>
         _store.DeleteAsync(CacheKey, cancellationToken);
+
+    public void Dispose() => _gate.Dispose();
 
     private async ValueTask<CacheDocument?> ReadCacheAsync(CancellationToken token)
     {

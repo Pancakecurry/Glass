@@ -15,7 +15,8 @@ public sealed class BuiltInLogicTests
     [Fact]
     public void CountdownUsesSemanticTimestampAcrossElapsedTime()
     {
-        var time = new MutableTimeProvider(DateTimeOffset.Parse("2026-01-01T00:00:00Z"));
+        var time = new MutableTimeProvider(new DateTimeOffset(
+            2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
         var timer = new CountdownTimer(time);
         timer.Start(TimeSpan.FromMinutes(5));
         time.Advance(TimeSpan.FromMinutes(2));
