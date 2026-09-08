@@ -1,4 +1,3 @@
-using Glass.Widgets.Abstractions;
 using Windows.System.Power;
 
 namespace Glass.Platform.Windows.SystemStatus;
@@ -6,7 +5,7 @@ namespace Glass.Platform.Windows.SystemStatus;
 public sealed record PowerSnapshot(int? RemainingChargePercent, BatteryStatus Status,
     EnergySaverStatus EnergySaverStatus, PowerSupplyStatus PowerSupplyStatus);
 
-public sealed class PowerStatusProvider : IWidgetProvider, IDisposable
+public sealed class PowerStatusProvider : IDisposable
 {
     private bool _started;
     public string ProviderId => "power";

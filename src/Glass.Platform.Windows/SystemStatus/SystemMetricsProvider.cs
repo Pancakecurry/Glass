@@ -1,6 +1,5 @@
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
-using Glass.Widgets.Abstractions;
 
 namespace Glass.Platform.Windows.SystemStatus;
 
@@ -14,7 +13,7 @@ public sealed record SystemMetricsSnapshot(
 
 public sealed record VolumeSnapshot(string Name, string RootPath, long TotalBytes, long FreeBytes);
 
-public sealed partial class SystemMetricsProvider : IWidgetProvider, IAsyncDisposable
+public sealed partial class SystemMetricsProvider : IAsyncDisposable
 {
     private readonly TimeProvider _timeProvider;
     private CancellationTokenSource? _sampling;

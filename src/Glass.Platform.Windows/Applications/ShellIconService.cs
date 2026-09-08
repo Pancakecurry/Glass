@@ -78,8 +78,8 @@ public sealed partial class ShellIconService : IDisposable
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] public string TypeName;
     }
 
-    [LibraryImport("shell32.dll", EntryPoint = "SHGetFileInfoW", StringMarshalling = StringMarshalling.Utf16)]
-    private static partial nuint SHGetFileInfo(string path, uint attributes, out ShellFileInfo info,
+    [DllImport("shell32.dll", EntryPoint = "SHGetFileInfoW", CharSet = CharSet.Unicode)]
+    private static extern nuint SHGetFileInfo(string path, uint attributes, out ShellFileInfo info,
         uint fileInfoSize, uint flags);
 
     [LibraryImport("user32.dll")]

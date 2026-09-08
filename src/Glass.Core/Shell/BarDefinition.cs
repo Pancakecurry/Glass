@@ -64,7 +64,7 @@ public sealed record BarDefinition(
         };
     }
 
-    private static IReadOnlyList<BarContentItem> NormalizeContent(
+    private static BarContentItem[] NormalizeContent(
         IReadOnlyList<BarContentItem>? content)
     {
         var items = content?.Where(item => item is not null).ToList() ?? [];

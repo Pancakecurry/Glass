@@ -30,13 +30,6 @@ public sealed class WidgetStateStore(ILocalStateStore store)
     public ValueTask DeleteAsync(WidgetInstanceId id, CancellationToken token = default) =>
         store.DeleteAsync(Key(id), token);
 
-    public ValueTask SaveAsync<T>(WidgetInstanceId id, T state, CancellationToken token = default) =>
-        store.WriteAsync(Key(id),
-            JsonSerializer.Serialize(new Document<T>(CurrentSchemaVersion, state), Options), token);
-
-    public ValueTask DeleteAsync(WidgetInstanceId id, CancellationToken token = default) =>
-        store.DeleteAsync(Key(id), token);
-
     private static string Key(WidgetInstanceId id) => $"widget-{id.Value:N}";
     private sealed record Document<T>(int SchemaVersion, T Payload);
 }
