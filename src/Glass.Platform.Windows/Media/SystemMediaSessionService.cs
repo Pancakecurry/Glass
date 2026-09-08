@@ -180,7 +180,7 @@ public sealed class SystemMediaSessionService : IDisposable
     }
 
     private async Task<bool> InvokeControlAsync(
-        Func<GlobalSystemMediaTransportControlsSession, Windows.Foundation.IAsyncOperation<bool>>
+        Func<GlobalSystemMediaTransportControlsSession, global::Windows.Foundation.IAsyncOperation<bool>>
             operation)
     {
         var session = _currentSession;
