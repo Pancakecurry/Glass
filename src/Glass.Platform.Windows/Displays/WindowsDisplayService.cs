@@ -8,7 +8,7 @@ namespace Glass.Platform.Windows.Displays;
 public sealed class WindowsDisplayService : IDisposable
 {
     private readonly DisplayAreaWatcher _watcher;
-    private IReadOnlyList<DisplayInfo> _displays = Array.Empty<DisplayInfo>();
+    private DisplayInfo[] _displays = [];
     private bool _disposed;
 
     public WindowsDisplayService()
@@ -89,7 +89,7 @@ public sealed class WindowsDisplayService : IDisposable
             return equivalent;
         }
 
-        return target.WasPrimary ? PrimaryDisplay : _displays.FirstOrDefault() ?? PrimaryDisplay;
+        return target.WasPrimary || _displays.Length == 0 ? PrimaryDisplay : _displays[0];
     }
 
     public static DisplayTarget ToTarget(DisplayInfo display) =>

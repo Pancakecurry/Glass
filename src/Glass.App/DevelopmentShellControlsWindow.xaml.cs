@@ -120,7 +120,7 @@ public sealed partial class DevelopmentShellControlsWindow : Window
         var length = ReadDouble(LengthBox, source.Length);
         var thickness = ReadDouble(ThicknessBox, source.Thickness);
         var target = WindowsDisplayService.ToTarget(SelectedDisplay);
-        var placement = ReadTag(PlacementSelector) switch
+        SurfacePlacement placement = ReadTag(PlacementSelector) switch
         {
             "Floating" => new FloatingPlacement(
                 target,

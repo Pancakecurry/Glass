@@ -2,11 +2,12 @@ using System.Text;
 
 namespace Glass.Infrastructure.Diagnostics;
 
-public sealed class LocalDiagnosticLog
+public sealed class LocalDiagnosticLog : IDisposable
 {
     private const long MaximumBytes = 512 * 1024;
     private readonly string _path;
     private readonly SemaphoreSlim _writeGate = new(1, 1);
+    private bool _disposed;
 
     public LocalDiagnosticLog(string logDirectory)
     {
@@ -20,6 +21,7 @@ public sealed class LocalDiagnosticLog
         string message,
         CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -40,5 +42,16 @@ public sealed class LocalDiagnosticLog
         {
             _writeGate.Release();
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _writeGate.Dispose();
     }
 }

@@ -9,6 +9,7 @@ namespace Glass.App.Runtime;
 internal sealed class ApplicationRuntime : IAsyncDisposable
 {
     private readonly GlassDataPaths _dataPaths = GlassDataPaths.CreateDefault();
+    private readonly List<Task> _diagnosticWrites = [];
     private WindowsDisplayService? _displays;
     private ShellRuntime? _shell;
     private DevelopmentShellControlsWindow? _developmentWindow;
@@ -64,14 +65,22 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
         _disposed = true;
         if (_shell is not null)
         {
-            _shell.RuntimeFaulted -= OnRuntimeFaulted;
             await _shell.DisposeAsync();
+            _shell.RuntimeFaulted -= OnRuntimeFaulted;
             _shell = null;
         }
 
         _displays?.Dispose();
         _displays = null;
         _developmentWindow = null;
+        Task[] writes;
+        lock (_diagnosticWrites)
+        {
+            writes = _diagnosticWrites.ToArray();
+        }
+
+        await Task.WhenAll(writes);
+        _diagnostics?.Dispose();
         _diagnostics = null;
         ShutdownCompleted = null;
     }
@@ -88,7 +97,11 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
         System.Diagnostics.Debug.WriteLine($"Shell runtime failure: {exception}");
         if (_diagnostics is { } diagnostics)
         {
-            _ = WriteDiagnosticAsync(diagnostics, exception);
+            var write = WriteDiagnosticAsync(diagnostics, exception);
+            lock (_diagnosticWrites)
+            {
+                _diagnosticWrites.Add(write);
+            }
         }
     }
 

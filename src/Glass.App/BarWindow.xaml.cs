@@ -5,6 +5,7 @@ using Glass.Platform.Windows.Windowing;
 using Glass.Shell.Surfaces;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 

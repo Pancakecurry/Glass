@@ -18,7 +18,9 @@ public static class SnapEngine
         if (!candidate.IsWellFormed || !workArea.IsWellFormed ||
             !double.IsFinite(threshold) || threshold < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(candidate));
+            throw new ArgumentOutOfRangeException(
+                nameof(candidate),
+                "Candidate, work area, and threshold must contain valid logical geometry.");
         }
 
         var fitted = candidate.ClampInside(workArea);
