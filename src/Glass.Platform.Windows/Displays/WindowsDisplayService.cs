@@ -24,10 +24,21 @@ public sealed class WindowsDisplayService : IDisposable
 
     public IReadOnlyList<DisplayInfo> Displays => _displays;
 
-    public DisplayInfo PrimaryDisplay =>
-        _displays.FirstOrDefault(display => display.IsPrimary)
-        ?? _displays.FirstOrDefault()
-        ?? throw new InvalidOperationException("Windows reported no display areas.");
+    public DisplayInfo PrimaryDisplay
+    {
+        get
+        {
+            var primary = _displays.FirstOrDefault(display => display.IsPrimary);
+            if (primary is not null)
+            {
+                return primary;
+            }
+
+            return _displays.Count > 0
+                ? _displays[0]
+                : throw new InvalidOperationException("Windows reported no display areas.");
+        }
+    }
 
     public void Refresh()
     {

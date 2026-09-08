@@ -51,10 +51,7 @@ public sealed partial class AppBarController : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(display);
 
-        if (thicknessPixels <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(thicknessPixels));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(thicknessPixels);
 
         Register();
         _lastRequest = new DockRequest(display, edge, thicknessPixels);
