@@ -17,9 +17,10 @@ public sealed class JsonShellLayoutStoreTests : IDisposable
     {
         var store = CreateStore();
         var expected = ShellLayout.CreateDefault(DisplayTarget.PrimaryFallback);
+        var cancellationToken = TestContext.Current.CancellationToken;
 
-        await store.SaveAsync(expected);
-        var actual = await store.LoadAsync(new ShellLayout([]));
+        await store.SaveAsync(expected, cancellationToken);
+        var actual = await store.LoadAsync(new ShellLayout([]), cancellationToken);
 
         Assert.Single(actual.Bars);
         Assert.IsType<AnchoredPlacement>(actual.Bars[0].Placement);
@@ -32,7 +33,9 @@ public sealed class JsonShellLayoutStoreTests : IDisposable
         var paths = new GlassDataPaths(_root);
         var fallback = ShellLayout.CreateDefault(DisplayTarget.PrimaryFallback);
 
-        var actual = await CreateStore(paths).LoadAsync(fallback);
+        var actual = await CreateStore(paths).LoadAsync(
+            fallback,
+            TestContext.Current.CancellationToken);
 
         Assert.Same(fallback, actual);
         Assert.Empty(Directory.EnumerateFiles(paths.BackupDirectory));
@@ -45,10 +48,12 @@ public sealed class JsonShellLayoutStoreTests : IDisposable
     {
         var paths = new GlassDataPaths(_root);
         var state = new AtomicJsonStateStore(paths);
-        await state.WriteAsync("shell-layout", content);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await state.WriteAsync("shell-layout", content, cancellationToken);
         var fallback = ShellLayout.CreateDefault(DisplayTarget.PrimaryFallback);
 
-        var actual = await new JsonShellLayoutStore(state).LoadAsync(fallback);
+        var actual = await new JsonShellLayoutStore(state)
+            .LoadAsync(fallback, cancellationToken);
 
         Assert.Same(fallback, actual);
         Assert.Single(Directory.EnumerateFiles(paths.BackupDirectory));

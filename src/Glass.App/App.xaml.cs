@@ -4,6 +4,10 @@ using Microsoft.UI.Xaml;
 
 namespace Glass.App;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1001:Types that own disposable fields should be disposable",
+    Justification = "WinUI owns the Application lifetime; the runtime is disposed by the async shutdown path.")]
 public partial class App : Application
 {
     private const string InstanceKey = "Glass.Primary";

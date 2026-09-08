@@ -15,10 +15,13 @@ public sealed class AtomicJsonStateStoreTests : IDisposable
         var paths = new GlassDataPaths(_root);
         var store = new AtomicJsonStateStore(paths);
 
-        await store.WriteAsync("settings", "{\"value\":1}");
-        await store.WriteAsync("settings", "{\"value\":2}");
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await store.WriteAsync("settings", "{\"value\":1}", cancellationToken);
+        await store.WriteAsync("settings", "{\"value\":2}", cancellationToken);
 
-        Assert.Equal("{\"value\":2}", await store.ReadAsync("settings"));
+        Assert.Equal(
+            "{\"value\":2}",
+            await store.ReadAsync("settings", cancellationToken));
         Assert.Empty(Directory.EnumerateFiles(paths.StateDirectory, "*.tmp"));
     }
 
@@ -29,9 +32,10 @@ public sealed class AtomicJsonStateStoreTests : IDisposable
     public async Task RejectsPathTraversalAndFilenameSyntax(string key)
     {
         var store = new AtomicJsonStateStore(new GlassDataPaths(_root));
+        var cancellationToken = TestContext.Current.CancellationToken;
 
         await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await store.WriteAsync(key, "{}"));
+            await store.WriteAsync(key, "{}", cancellationToken));
     }
 
     public void Dispose()
