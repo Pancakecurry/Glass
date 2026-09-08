@@ -6,6 +6,8 @@ using Glass.Platform.Windows.Displays;
 using Glass.Shell.Runtime;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Glass.Core.Applications;
+using Glass.Widgets.Abstractions;
 
 namespace Glass.App;
 
@@ -14,23 +16,40 @@ public sealed partial class DevelopmentShellControlsWindow : Window
     private readonly ShellRuntime _shell;
     private readonly WindowsDisplayService _displays;
     private readonly Func<Task> _shutdown;
+    private readonly Action _syncWidgets;
     private bool _closing;
 
     public DevelopmentShellControlsWindow(
         ShellRuntime shell,
         WindowsDisplayService displays,
+        IReadOnlyList<ApplicationDescriptor> applications,
+        IReadOnlyList<WidgetMetadata> widgets,
+        Action syncWidgets,
         Func<Task> shutdown)
     {
         InitializeComponent();
         _shell = shell;
         _displays = displays;
         _shutdown = shutdown;
+        _syncWidgets = syncWidgets;
         Title = ProductBranding.DevelopmentControlsWindowTitle;
         Closed += OnClosed;
         _shell.RuntimeFaulted += OnRuntimeFaulted;
         _displays.DisplaysChanged += OnDisplaysChanged;
         PopulateDisplays();
         PopulateBars();
+        foreach (var application in applications)
+            ApplicationSelector.Items.Add(new ComboBoxItem
+            {
+                Content = application.DisplayName,
+                Tag = application.Identity,
+            });
+        foreach (var widget in widgets)
+            WidgetSelector.Items.Add(new ComboBoxItem
+            {
+                Content = widget.DisplayName,
+                Tag = widget,
+            });
     }
 
     public void Present()
@@ -203,6 +222,61 @@ public sealed partial class DevelopmentShellControlsWindow : Window
             _shell.SetBarVisible(bar.Id, false);
         }
     }
+
+    private async void PinApplication_Click(object sender, RoutedEventArgs args) =>
+        await RunAsync(async () =>
+        {
+            if (SelectedBar is not { } bar ||
+                (ApplicationSelector.SelectedItem as ComboBoxItem)?.Tag is not ApplicationIdentity app)
+                return;
+            await _shell.PinApplicationAsync(bar.Id, app, BarZone.Center);
+            PopulateBars(bar.Id);
+        });
+
+    private async void UnpinApplication_Click(object sender, RoutedEventArgs args) =>
+        await RunAsync(async () =>
+        {
+            if (SelectedBar is not { } bar ||
+                (ApplicationSelector.SelectedItem as ComboBoxItem)?.Tag is not ApplicationIdentity app)
+                return;
+            await _shell.UnpinApplicationAsync(bar.Id, app);
+            PopulateBars(bar.Id);
+        });
+
+    private async void AddBarWidget_Click(object sender, RoutedEventArgs args) =>
+        await RunAsync(async () =>
+        {
+            if (SelectedBar is not { } bar ||
+                (WidgetSelector.SelectedItem as ComboBoxItem)?.Tag is not WidgetMetadata metadata)
+                return;
+            var id = Guid.NewGuid();
+            await _shell.AddWidgetToBarAsync(
+                new WidgetInstanceDefinition(id, metadata.TypeId.Value,
+                    new LogicalSize(metadata.SizeConstraints.Default.Width,
+                        metadata.SizeConstraints.Default.Height),
+                    new Dictionary<string, string>()),
+                bar.Id,
+                ReadEnum(WidgetZoneSelector, BarZone.Center));
+            PopulateBars(bar.Id);
+        });
+
+    private async void AddStandaloneWidget_Click(object sender, RoutedEventArgs args) =>
+        await RunAsync(async () =>
+        {
+            if ((WidgetSelector.SelectedItem as ComboBoxItem)?.Tag is not WidgetMetadata metadata)
+                return;
+            var id = Guid.NewGuid();
+            var size = new LogicalSize(metadata.SizeConstraints.Default.Width,
+                metadata.SizeConstraints.Default.Height);
+            await _shell.AddStandaloneWidgetAsync(
+                new WidgetInstanceDefinition(id, metadata.TypeId.Value, size,
+                    new Dictionary<string, string>()),
+                new FloatingPlacement(WindowsDisplayService.ToTarget(SelectedDisplay),
+                    new LogicalRect(120, 120, size.Width, size.Height)),
+                SurfaceZOrder.Normal);
+            _syncWidgets();
+            PopulateBars();
+        });
 
     private void BarList_SelectionChanged(object sender, SelectionChangedEventArgs args)
     {

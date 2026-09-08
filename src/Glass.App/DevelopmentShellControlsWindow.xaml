@@ -55,6 +55,24 @@
             </StackPanel>
             <TextBlock Text="Diagnostics" FontWeight="SemiBold" />
             <TextBlock x:Name="DiagnosticsText" TextWrapping="Wrap" />
+
+            <TextBlock Text="Applications and widgets" FontWeight="SemiBold" />
+            <TextBlock Text="Temporary development controls; Phase 3 owns final information architecture." />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ComboBox x:Name="ApplicationSelector" MinWidth="260" PlaceholderText="Application" />
+                <Button Content="Pin to selected bar" Click="PinApplication_Click" />
+                <Button Content="Unpin" Click="UnpinApplication_Click" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ComboBox x:Name="WidgetSelector" MinWidth="220" PlaceholderText="Widget" />
+                <ComboBox x:Name="WidgetZoneSelector" SelectedIndex="1" MinWidth="100">
+                    <ComboBoxItem Content="Start" Tag="Start" />
+                    <ComboBoxItem Content="Center" Tag="Center" />
+                    <ComboBoxItem Content="End" Tag="End" />
+                </ComboBox>
+                <Button Content="Add to selected bar" Click="AddBarWidget_Click" />
+                <Button Content="Add standalone" Click="AddStandaloneWidget_Click" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Window>

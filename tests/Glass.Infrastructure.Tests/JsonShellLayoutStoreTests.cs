@@ -28,6 +28,25 @@ public sealed class JsonShellLayoutStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task MigratesSchemaOneWithoutChangingBarIdentityOrPlacement()
+    {
+        var paths = new GlassDataPaths(_root);
+        var state = new AtomicJsonStateStore(paths);
+        var expected = ShellLayout.CreateDefault(DisplayTarget.PrimaryFallback);
+        var current = new JsonShellLayoutStore(state);
+        await current.SaveAsync(expected, TestContext.Current.CancellationToken);
+        var json = await state.ReadAsync("shell-layout", TestContext.Current.CancellationToken);
+        await state.WriteAsync("shell-layout", json!.Replace("\"schemaVersion\": 2", "\"schemaVersion\": 1"),
+            TestContext.Current.CancellationToken);
+
+        var migrated = await current.LoadAsync(new ShellLayout([]), TestContext.Current.CancellationToken);
+
+        Assert.Equal(expected.Bars[0].Id, migrated.Bars[0].Id);
+        Assert.Equal(expected.Bars[0].Placement, migrated.Bars[0].Placement);
+        Assert.Single(migrated.Bars[0].Content.OfType<RunningApplicationsSlotBarItem>());
+    }
+
+    [Fact]
     public async Task MissingDocumentReturnsDefaultsWithoutBackup()
     {
         var paths = new GlassDataPaths(_root);

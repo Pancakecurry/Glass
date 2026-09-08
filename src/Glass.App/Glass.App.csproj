@@ -26,5 +26,6 @@
     <ProjectReference Include="..\Glass.Shell\Glass.Shell.csproj" />
     <ProjectReference Include="..\Glass.Widgets.Abstractions\Glass.Widgets.Abstractions.csproj" />
     <ProjectReference Include="..\Glass.Widgets.BuiltIn\Glass.Widgets.BuiltIn.csproj" />
+    <ProjectReference Include="..\Glass.Widgets.Runtime\Glass.Widgets.Runtime.csproj" />
   </ItemGroup>
 </Project>

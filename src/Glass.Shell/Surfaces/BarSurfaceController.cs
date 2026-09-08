@@ -56,6 +56,10 @@ public sealed class BarSurfaceController : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Definition = definition.Normalize();
+        if (Definition.Placement is FloatingPlacement)
+        {
+            _autoHidden = false;
+        }
         ApplyCurrentPlacement();
     }
 
@@ -100,7 +104,7 @@ public sealed class BarSurfaceController : IDisposable
         DefinitionSettled = null;
     }
 
-    private void ApplyCurrentPlacement()
+    private void ApplyCurrentPlacement(uint? dpiOverride = null)
     {
         var display = _displays.Resolve(Definition.Placement.Target);
         var resolvedTarget = WindowsDisplayService.ToTarget(display);
@@ -112,7 +116,7 @@ public sealed class BarSurfaceController : IDisposable
             };
         }
 
-        var dpi = WindowPositioner.GetDpi(_window.Hwnd);
+        var dpi = dpiOverride ?? WindowPositioner.GetDpi(_window.Hwnd);
         ShellWindowStyle.Apply(_window.Hwnd, Definition.ZOrder);
 
         if (Definition.Placement is DockedPlacement docked && !_autoHidden)
@@ -203,13 +207,39 @@ public sealed class BarSurfaceController : IDisposable
 
     private bool OnDpiChanged(nuint wParam, nint lParam, out nint result)
     {
-        if (!_inUserMove)
+        var change = DpiChangedMessage.Parse(wParam, lParam);
+        if (Definition.Placement is FloatingPlacement)
         {
-            ApplyCurrentPlacement();
+            WindowPositioner.MoveAndResize(_window.Hwnd, change.SuggestedBounds);
+            if (!_inUserMove)
+            {
+                var display = _displays.GetForWindow(_window.WindowId);
+                var logical = DpiConverter.ToLogical(
+                    change.SuggestedBounds,
+                    display.WorkArea,
+                    change.DpiX);
+                Definition = (Definition with
+                {
+                    Placement = new FloatingPlacement(
+                        WindowsDisplayService.ToTarget(display),
+                        logical),
+                    Length = Definition.Orientation == BarOrientation.Horizontal
+                        ? logical.Width
+                        : logical.Height,
+                    Thickness = Definition.Orientation == BarOrientation.Horizontal
+                        ? logical.Height
+                        : logical.Width,
+                }).Normalize();
+                DefinitionSettled?.Invoke(this, new BarDefinitionChangedEventArgs(Definition));
+            }
+        }
+        else
+        {
+            ApplyCurrentPlacement(change.DpiX);
         }
 
         result = 0;
-        return false;
+        return true;
     }
 
     private bool OnEnterSizeMove(nuint wParam, nint lParam, out nint result)

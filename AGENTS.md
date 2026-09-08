@@ -27,7 +27,7 @@ These rules apply to every future coding agent working in this repository.
 
 ## Phase discipline
 
-The active branch is bounded to Phase 1 runtime, persistence, native surface, and structural taskbar foundations. Do not add widgets, final Control Center UI, the material engine, product motion, Explorer integration, or release packaging. Development controls and structural zone labels are not a visual-design precedent.
+The active branch is bounded to Phase 2 application integration, trusted built-in widgets, and functional hosting. Do not begin the Phase 3 design system, final Control Center, Liquid Glass material engine, or final motion language. Development controls and functional widget surfaces are not a visual-design precedent.
 
 Do not add browser mocks, Playwright, screenshot regression tests, screenshot-based QA infrastructure, shell emulators, fake monitor frameworks, or elaborate integration-test infrastructure.
 

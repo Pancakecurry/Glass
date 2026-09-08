@@ -57,6 +57,20 @@ public sealed class AtomicJsonStateStore : ILocalStateStore
         }
     }
 
+    public ValueTask DeleteAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var path = GetStatePath(key);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
     public string GetStatePath(string key)
     {
         ValidateKey(key);

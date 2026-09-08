@@ -1,11 +1,15 @@
 using Glass.Core.Shell;
 using Glass.Platform.Windows.Displays;
+using Glass.Platform.Windows.Applications;
 using Glass.Shell.Surfaces;
 
 namespace Glass.App.Runtime;
 
-internal sealed class BarSurfaceFactory(WindowsDisplayService displays) : IBarSurfaceFactory
+internal sealed class BarSurfaceFactory(
+    WindowsDisplayService displays,
+    RunningWindowTracker runningWindows,
+    ApplicationLaunchService launcher) : IBarSurfaceFactory
 {
     public IBarSurface Create(BarDefinition definition) =>
-        new BarWindow(displays, definition);
+        new BarWindow(displays, runningWindows, launcher, definition);
 }

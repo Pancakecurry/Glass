@@ -30,6 +30,9 @@ public sealed record BarDefinition(
     SurfaceZOrder ZOrder,
     bool IsEnabled)
 {
+    public IReadOnlyList<BarContentItem> Content { get; init; } =
+        [new RunningApplicationsSlotBarItem(BarZone.Center)];
+
     public const double MinimumLength = 120;
     public const double MaximumLength = 4096;
     public const double MinimumThickness = 28;
@@ -44,6 +47,7 @@ public sealed record BarDefinition(
             zones = [BarZone.Start, BarZone.Center, BarZone.End];
         }
 
+        var content = NormalizeContent(Content);
         return this with
         {
             Length = Math.Clamp(
@@ -55,7 +59,32 @@ public sealed record BarDefinition(
                 MinimumThickness,
                 MaximumThickness),
             Zones = zones,
+            Content = content,
+            AutoHideEnabled = Placement is not FloatingPlacement && AutoHideEnabled,
         };
+    }
+
+    private static IReadOnlyList<BarContentItem> NormalizeContent(
+        IReadOnlyList<BarContentItem>? content)
+    {
+        var items = content?.Where(item => item is not null).ToList() ?? [];
+        var firstRunningSlot = items.FindIndex(item => item is RunningApplicationsSlotBarItem);
+        if (firstRunningSlot < 0)
+        {
+            items.Add(new RunningApplicationsSlotBarItem(BarZone.Center));
+        }
+        else
+        {
+            for (var index = items.Count - 1; index > firstRunningSlot; index--)
+            {
+                if (items[index] is RunningApplicationsSlotBarItem)
+                {
+                    items.RemoveAt(index);
+                }
+            }
+        }
+
+        return items.ToArray();
     }
 
     public static BarDefinition CreateDefault(DisplayTarget target) =>

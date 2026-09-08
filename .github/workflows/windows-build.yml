@@ -35,3 +35,9 @@ jobs:
 
       - name: Test Infrastructure
         run: dotnet test tests/Glass.Infrastructure.Tests/Glass.Infrastructure.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Widget Runtime
+        run: dotnet test tests/Glass.Widgets.Runtime.Tests/Glass.Widgets.Runtime.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Built-in Widgets
+        run: dotnet test tests/Glass.Widgets.BuiltIn.Tests/Glass.Widgets.BuiltIn.Tests.csproj --configuration Release --no-restore

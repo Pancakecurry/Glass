@@ -2,7 +2,7 @@
 
 Glass is the internal engineering codename for a native Windows shell-enhancement product. The eventual product will provide a freely positionable and resizable taskbar or dock, native desktop widgets, a configurable translucent material system, and carefully designed motion while remaining local-first, private, and performant.
 
-This repository is at **Phase 1 of 5 — Runtime, Surface, and Taskbar Foundation**. It contains the first production-oriented runtime, local layout persistence, multi-surface bar model, and native surface lifecycle. Its controls and bar contents are deliberately utilitarian engineering tools, not the product's final visual direction.
+This repository is at **Phase 2 of 5 — Applications and Widgets**. It contains the functional application/taskbar model, trusted widget runtime, Tier 0 and Tier 1 widget logic, shared providers, local state, and native standalone widget host. Its controls and surfaces are deliberately utilitarian engineering tools, not the product's final visual direction.
 
 ## Technology baseline
 
@@ -18,7 +18,7 @@ The minimum architectural Windows target is Windows 10 version 1809, build 17763
 
 ## Development status
 
-Phase 1 promotes the display, AppBar, and native-message findings from Phase 0B into a runtime that can restore and manage multiple bars. It adds floating, anchored, and docked placement; settled-state persistence; topology recovery; DPI-change handling; snapping; and event-driven auto-hide. Windows runtime, visual, shell, mixed-DPI, multi-monitor, and packaging behavior still requires manual validation on real Windows hardware.
+Phase 2 adds Windows Shell application discovery, event-driven running-window tracking, launch/activation/close semantics, pinning, schema-v2 bar content, standalone widget surfaces, a trusted explicit widget registry, visibility-aware providers, and the initial Tier 0/Tier 1 functional set. Windows runtime, visual, shell, mixed-DPI, multi-monitor, media, audio, clipboard, and packaging behavior still requires manual validation on real Windows hardware.
 
 ## Repository map
 
@@ -29,6 +29,7 @@ Phase 1 promotes the display, AppBar, and native-message findings from Phase 0B 
     src/Glass.Rendering            Native Composition animation primitive
     src/Glass.Shell                Shell runtime, bar surfaces, snapping integration, and auto-hide
     src/Glass.Widgets.Abstractions Platform-light widget contracts and models
+    src/Glass.Widgets.Runtime      Trusted registry, lifecycle, provider, and state coordination
     src/Glass.Widgets.BuiltIn      Trusted first-party widget implementation boundary
     tests/Glass.Core.Tests         Small cross-platform tests for deterministic Core logic
     tests/Glass.Infrastructure.Tests Cross-platform persistence and recovery tests
@@ -57,6 +58,8 @@ Use a Windows development machine with the .NET 10 SDK and a Visual Studio insta
     dotnet build Glass.sln -c Debug -p:Platform=x64
     dotnet test tests/Glass.Core.Tests/Glass.Core.Tests.csproj -c Debug
     dotnet test tests/Glass.Infrastructure.Tests/Glass.Infrastructure.Tests.csproj -c Debug
+    dotnet test tests/Glass.Widgets.Runtime.Tests/Glass.Widgets.Runtime.Tests.csproj -c Debug
+    dotnet test tests/Glass.Widgets.BuiltIn.Tests/Glass.Widgets.BuiltIn.Tests.csproj -c Debug
     dotnet run --project src/Glass.App/Glass.App.csproj -c Debug -p:Platform=x64
 
 The application remains unpackaged in Phase 1. MSIX or MSIXBundle remains the leading distribution direction, but release packaging is still deferred; see ADR 006.
@@ -69,8 +72,8 @@ The product is designed to work without an account, required backend, telemetry,
 
 ## Current and next milestone
 
-Current phase: **Phase 1 of 5 — Runtime, Surface, and Taskbar Foundation**
+Current phase: **Phase 2 of 5 — Applications and Widgets**
 
-The Phase 0B evidence remains in `docs/TECHNICAL_SPIKE.md`. Phase 2 is gated on orchestrator review and must not begin from this branch.
+The Phase 0B evidence remains in `docs/TECHNICAL_SPIKE.md`; Phase 1 architecture remains in `docs/PHASE_1_RUNTIME_SHELL.md`. Phase 3 is gated on orchestrator review and must not begin from this branch.
 
 Read AGENTS.md before making changes, then read the relevant product and architecture documents for the subsystem being changed.

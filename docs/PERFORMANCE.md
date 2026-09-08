@@ -6,7 +6,7 @@ Performance is a product requirement, not a later optimization pass. The eventua
 
 ## Initial aspirational budgets
 
-These are engineering goals, not claims that Phase 1 has achieved them:
+These are engineering goals, not claims that Phase 2 has achieved them:
 
 - Idle CPU below roughly 0.5 percent when realistically achievable.
 - Idle GPU effectively near zero.
@@ -43,3 +43,21 @@ These are engineering goals, not claims that Phase 1 has achieved them:
 - Hidden bars do not run animation or refresh loops in this phase.
 
 No performance number in this document is a benchmark result. Phase 1 adds no telemetry or continuous instrumentation and makes no Windows performance claim.
+
+## Phase 2 scheduling
+
+- Running windows use WinEvent hooks plus a short one-shot coalescing delay, never a permanent scan timer.
+- System metrics use one shared one-second sampler only while at least one dependent widget is visible.
+- Clock and date refresh at semantic boundaries; hidden widgets are suspended.
+- Battery, audio, clipboard, display, and media state prefer operating-system events.
+- Weather requests are opt-in, serialized, conditionally cached, and isolated from shell startup.
+- HICON ownership is bounded and all owned handles are destroyed.
+
+## Phase 2 scheduling
+
+- Running windows use WinEvent hooks plus a one-shot coalescing delay, not a scan timer.
+- System metrics use one shared one-second sampler only while a dependent widget is visible.
+- Clock and date refresh at semantic boundaries; hidden widgets are suspended.
+- Battery, audio, clipboard, display, and media state prefer OS events.
+- Weather is opt-in, serialized, conditionally cached, and isolated from shell startup.
+- Shell icon ownership is bounded and owned native handles are destroyed.

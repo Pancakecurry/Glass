@@ -30,15 +30,16 @@ The arrows describe allowed direction, not a request to add references preemptiv
 | Glass.Core | net10.0 | Pure domain models, platform-independent geometry, and local-state contracts | None |
 | Glass.Infrastructure | net10.0 | Versioned JSON documents, atomic local files, corruption recovery, and local diagnostics | Glass.Core |
 | Glass.Widgets.Abstractions | net10.0 | Minimal widget identity, metadata, sizing, capability, and instance-configuration contracts | None |
+| Glass.Widgets.Runtime | net10.0 | Explicit trusted registry, lifecycle, provider visibility, and per-instance state | Core, Widgets.Abstractions |
 | Glass.Platform.Windows | net10.0-windows10.0.17763.0 | HWND/AppWindow access, native messages, displays, DPI conversion, AppBar, and media sessions | Glass.Core, Microsoft.WindowsAppSDK |
 | Glass.Rendering | net10.0-windows10.0.17763.0 | Small Microsoft.UI.Composition animation proof; future materials and motion remain deferred | Microsoft.WindowsAppSDK |
 | Glass.Shell | net10.0-windows10.0.17763.0 | Shell runtime, bar-surface lifecycle, placement, snapping integration, and auto-hide | Glass.Core, Glass.Platform.Windows, Glass.Rendering, Glass.Widgets.Abstractions |
-| Glass.Widgets.BuiltIn | net10.0-windows10.0.17763.0 | Trusted first-party widget implementations | Glass.Widgets.Abstractions |
+| Glass.Widgets.BuiltIn | net10.0 | Trusted first-party widget metadata and deterministic feature logic | Core, Widgets.Abstractions, Widgets.Runtime |
 | Glass.App | net10.0-windows10.0.17763.0 | WinUI executable, bootstrap, lifecycle, and top-level composition | All feature and contract projects |
 | Glass.Core.Tests | net10.0 | Small deterministic tests for Core | Glass.Core |
 | Glass.Infrastructure.Tests | net10.0 | Deterministic state-store, schema, and recovery tests | Glass.Core, Glass.Infrastructure |
 
-Phase 1 promotes the successful Phase 0B display, message-routing, AppBar, and window findings into one production surface path. It does not implement widgets, the final Control Center, the material engine, product motion, or release packaging.
+Phase 2 adds one application integration path and one trusted widget runtime. Platform.Windows owns Windows application, window, media, metrics, power, audio, and clipboard adapters. Widgets.Runtime never discovers code through reflection and is not a plugin SDK. The app remains the composition and WinUI host boundary.
 
 ## Allowed future edges
 
@@ -46,6 +47,7 @@ Phase 1 promotes the successful Phase 0B display, message-routing, AppBar, and w
 - Glass.Rendering may reference Glass.Core when rendering state or motion contracts require a domain concept.
 - Glass.Shell may reference Glass.Core, Glass.Platform.Windows, Glass.Rendering, and Glass.Widgets.Abstractions as its implementation requires.
 - Glass.Widgets.BuiltIn may reference Glass.Core, Glass.Widgets.Abstractions, Glass.Platform.Windows, and Glass.Rendering as individual widgets require.
+- Glass.Widgets.Runtime may reference Glass.Core and Glass.Widgets.Abstractions only.
 - Glass.App may reference the feature projects to compose them, but reusable feature logic must remain outside the application project.
 
 No project may introduce a reverse reference from Core or widget contracts to WinUI, Windows App SDK, Windows namespaces, shell APIs, rendering APIs, cloud services, or a web stack.
@@ -76,6 +78,7 @@ Glass.App explicitly composes `ApplicationRuntime`, the local stores, `WindowsDi
 - Glass.Rendering must not reference Platform.Windows, Shell, Infrastructure, Widgets, or App.
 - Glass.Shell may consume Core, Platform.Windows, Rendering, and Widgets.Abstractions; it must not reference Infrastructure or App.
 - Glass.Widgets.BuiltIn must not reference Shell or App.
+- Glass.Widgets.Runtime must not reference Platform.Windows, Rendering, Shell, BuiltIn, or App.
 - Glass.App is the composition root; no project may reference it.
 - Circular references and parallel surface engines are forbidden.
 

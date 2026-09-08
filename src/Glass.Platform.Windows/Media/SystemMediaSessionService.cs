@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Windows.Media.Control;
+using Windows.Storage.Streams;
 
 namespace Glass.Platform.Windows.Media;
 
@@ -55,6 +56,10 @@ public sealed class SystemMediaSessionService : IDisposable
 
     public async Task<bool> TrySkipNextAsync() =>
         await InvokeControlAsync(session => session.TrySkipNextAsync());
+
+    public async Task<bool> TrySeekAsync(TimeSpan position) =>
+        await InvokeControlAsync(session => session.TryChangePlaybackPositionAsync(
+            Math.Max(0, position.Ticks)));
 
     public void Dispose()
     {
@@ -138,6 +143,14 @@ public sealed class SystemMediaSessionService : IDisposable
         }
     }
 
+    private async void OnTimelinePropertiesChanged(
+        GlobalSystemMediaTransportControlsSession sender,
+        TimelinePropertiesChangedEventArgs args)
+    {
+        try { await RefreshAsync(sender); }
+        catch (Exception exception) { PublishError(exception); }
+    }
+
     private async Task ReplaceCurrentSessionAsync(
         GlobalSystemMediaTransportControlsSession? session)
     {
@@ -157,6 +170,7 @@ public sealed class SystemMediaSessionService : IDisposable
 
         session.MediaPropertiesChanged += OnMediaPropertiesChanged;
         session.PlaybackInfoChanged += OnPlaybackInfoChanged;
+        session.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
         await RefreshAsync(session);
     }
 
@@ -170,12 +184,23 @@ public sealed class SystemMediaSessionService : IDisposable
         }
 
         var playback = session.GetPlaybackInfo();
+        var timeline = session.GetTimelineProperties();
+        var controls = playback.Controls;
         Publish(new MediaSessionSnapshot(
             true,
             session.SourceAppUserModelId ?? string.Empty,
             properties?.Title ?? string.Empty,
             properties?.Artist ?? string.Empty,
+            properties?.AlbumTitle ?? string.Empty,
+            await ReadArtworkAsync(properties?.Thumbnail),
             playback.PlaybackStatus.ToString(),
+            timeline.Position,
+            timeline.EndTime - timeline.StartTime,
+            controls.IsPlayEnabled,
+            controls.IsPauseEnabled,
+            controls.IsPreviousEnabled,
+            controls.IsNextEnabled,
+            controls.IsPlaybackPositionEnabled,
             "Active session"));
     }
 
@@ -209,7 +234,21 @@ public sealed class SystemMediaSessionService : IDisposable
 
         _currentSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
         _currentSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
+        _currentSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
         _currentSession = null;
+    }
+
+    private static async Task<byte[]?> ReadArtworkAsync(
+        RandomAccessStreamReference? reference)
+    {
+        if (reference is null) return null;
+        using var stream = await reference.OpenReadAsync();
+        var length = checked((uint)Math.Min(stream.Size, 2 * 1024 * 1024));
+        using var reader = new DataReader(stream);
+        _ = await reader.LoadAsync(length);
+        var bytes = new byte[length];
+        reader.ReadBytes(bytes);
+        return bytes;
     }
 
     private void Publish(MediaSessionSnapshot snapshot)

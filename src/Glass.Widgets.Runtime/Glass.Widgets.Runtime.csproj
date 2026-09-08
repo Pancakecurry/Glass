@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Glass.Widgets.Runtime</RootNamespace>
+    <AssemblyName>Glass.Widgets.Runtime</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Glass.Core\Glass.Core.csproj" />
+    <ProjectReference Include="..\Glass.Widgets.Abstractions\Glass.Widgets.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

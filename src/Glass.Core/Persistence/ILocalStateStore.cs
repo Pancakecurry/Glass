@@ -14,4 +14,8 @@ public interface ILocalStateStore
         string key,
         string serializedState,
         CancellationToken cancellationToken = default);
+
+    ValueTask DeleteAsync(
+        string key,
+        CancellationToken cancellationToken = default);
 }

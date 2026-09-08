@@ -21,7 +21,7 @@ public interface IBarSurface : IDisposable
 
     void Apply(BarDefinition definition);
 
-    BarDefinition ReconcileDisplay();
+    ValueTask<BarDefinition> ReconcileDisplayAsync();
 
     void SetVisible(bool visible);
 

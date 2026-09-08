@@ -39,3 +39,19 @@
 Phase 0B proved local access to media sessions already exposed by Windows. That proof remains in the platform project for future Phase 2 use but is disconnected from Phase 1 startup and shell ownership. Any future packaged capability declaration must be added deliberately with the production media feature. This access is not telemetry, sends no data, and requires no Glass account.
 
 Phase 1 introduces no network, account, telemetry, authentication, arbitrary plugin execution, or privileged behavior. Optional diagnostics remain bounded local text files.
+
+## Phase 2 data boundaries
+
+- Quick Notes text is stored only in its versioned per-instance local state file and is never written to diagnostics.
+- Clipboard contents are read from Windows only while the widget is used; Glass never persists or logs clipboard contents.
+- Weather is disabled until the user supplies coordinates or explicitly grants one-shot location access. Requests go only to MET Norway over HTTPS, include a truthful product user agent, and use a bounded removable cache.
+- Application pins store stable application identity, not process IDs or window handles.
+- No widget uses arbitrary JavaScript, DLL loading, reflection discovery, accounts, telemetry, or cloud state.
+
+## Phase 2 data boundaries
+
+- Quick Notes text is stored only in its versioned per-instance local state file and is never written to diagnostics.
+- Clipboard contents are read from Windows only while the widget is used; Glass never persists or logs clipboard contents.
+- Weather is disabled until the user supplies coordinates or explicitly grants one-shot location access. Requests go only to MET Norway over HTTPS, include a truthful product user agent, and use a bounded removable cache.
+- Application pins store stable application identity, not process IDs or window handles.
+- No widget uses arbitrary JavaScript, DLL loading, reflection discovery, accounts, telemetry, or cloud state.

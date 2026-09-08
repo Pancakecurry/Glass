@@ -11,15 +11,7 @@
             <Border x:Name="DragRegion" Padding="12,6" Background="#22000000" CornerRadius="4">
                 <TextBlock Text="Glass bar — development surface" />
             </Border>
-            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
-                <TextBlock Text="Start zone" />
-            </Border>
-            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
-                <TextBlock Text="Center zone" />
-            </Border>
-            <Border Padding="12,6" Background="#18000000" CornerRadius="4">
-                <TextBlock Text="End zone" />
-            </Border>
+            <StackPanel x:Name="ContentPanel" Orientation="Horizontal" Spacing="4" />
         </StackPanel>
     </Grid>
 </Window>

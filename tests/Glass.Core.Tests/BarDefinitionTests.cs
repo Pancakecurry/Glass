@@ -18,6 +18,24 @@ public sealed class BarDefinitionTests
     }
 
     [Fact]
+    public void FloatingPlacementDisablesAutoHideAndKeepsOneRunningSlot()
+    {
+        var source = BarDefinition.CreateDefault(DisplayTarget.PrimaryFallback) with
+        {
+            Placement = new FloatingPlacement(DisplayTarget.PrimaryFallback,
+                new Glass.Core.Geometry.LogicalRect(10, 10, 400, 48)),
+            AutoHideEnabled = true,
+            Content = [
+                new RunningApplicationsSlotBarItem(BarZone.Start),
+                new RunningApplicationsSlotBarItem(BarZone.End),
+            ],
+        };
+        var normalized = source.Normalize();
+        Assert.False(normalized.AutoHideEnabled);
+        Assert.Single(normalized.Content.OfType<RunningApplicationsSlotBarItem>());
+    }
+
+    [Fact]
     public void NormalizeClampsLengthAndThicknessWithoutChangingOrientation()
     {
         var source = BarDefinition.CreateDefault(DisplayTarget.PrimaryFallback) with
