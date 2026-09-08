@@ -11,4 +11,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Glass.Core\Glass.Core.csproj" />
+  </ItemGroup>
 </Project>

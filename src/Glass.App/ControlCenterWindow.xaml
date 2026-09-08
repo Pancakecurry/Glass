@@ -1,0 +1,214 @@
+<Window
+    x:Class="Glass.App.ControlCenterWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border x:Name="SurfaceChrome" Padding="0">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Padding="24,18,24,14">
+                <TextBlock Text="Glass" Style="{StaticResource GlassTitleTextStyle}" />
+                <TextBlock x:Name="StatusText" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Style="{StaticResource GlassCaptionStyle}" />
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ListView x:Name="Navigation" Grid.Column="0" Padding="12,8"
+                          SelectionChanged="Navigation_SelectionChanged">
+                    <ListViewItem Tag="Overview" Style="{StaticResource GlassNavigationItemStyle}">Overview</ListViewItem>
+                    <ListViewItem Tag="Bars" Style="{StaticResource GlassNavigationItemStyle}">Bars</ListViewItem>
+                    <ListViewItem Tag="Widgets" Style="{StaticResource GlassNavigationItemStyle}">Widgets</ListViewItem>
+                    <ListViewItem Tag="Appearance" Style="{StaticResource GlassNavigationItemStyle}">Appearance</ListViewItem>
+                    <ListViewItem Tag="Behavior" Style="{StaticResource GlassNavigationItemStyle}">Behavior</ListViewItem>
+                    <ListViewItem Tag="Advanced" Style="{StaticResource GlassNavigationItemStyle}">Advanced / About</ListViewItem>
+                </ListView>
+                <Border Grid.Column="1" BorderThickness="1,0,0,0"
+                        BorderBrush="{StaticResource GlassDividerBrush}">
+                    <ScrollViewer>
+                        <Grid Margin="28,20,32,32">
+                            <StackPanel x:Name="OverviewPage" Spacing="16">
+                                <TextBlock Text="Overview" Style="{StaticResource GlassTitleTextStyle}" />
+                                <TextBlock Text="Your desktop, at a glance." Style="{StaticResource GlassCaptionStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Edit Desktop" Click="EditDesktop_Click" />
+                                    <Button Content="Finish Editing" Click="FinishEditing_Click" />
+                                    <Button Content="Add Widget" Click="QuickAddWidget_Click" />
+                                    <Button Content="Add Bar" Click="QuickAddBar_Click" />
+                                </StackPanel>
+                                <Grid ColumnSpacing="24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel><TextBlock Text="Bars" Style="{StaticResource GlassCaptionStyle}" />
+                                        <TextBlock x:Name="OverviewBars" FontSize="28" FontWeight="SemiBold" /></StackPanel>
+                                    <StackPanel Grid.Column="1"><TextBlock Text="Widgets" Style="{StaticResource GlassCaptionStyle}" />
+                                        <TextBlock x:Name="OverviewWidgets" FontSize="28" FontWeight="SemiBold" /></StackPanel>
+                                    <StackPanel Grid.Column="2"><TextBlock Text="Theme" Style="{StaticResource GlassCaptionStyle}" />
+                                        <TextBlock x:Name="OverviewTheme" FontSize="18" FontWeight="SemiBold" /></StackPanel>
+                                    <StackPanel Grid.Column="3"><TextBlock Text="Material" Style="{StaticResource GlassCaptionStyle}" />
+                                        <TextBlock x:Name="OverviewMaterial" FontSize="18" FontWeight="SemiBold" /></StackPanel>
+                                </Grid>
+                                <TextBlock Text="Quick theme" Style="{StaticResource GlassSectionTitleStyle}" />
+                                <RadioButtons x:Name="QuickTheme" SelectionChanged="QuickTheme_SelectionChanged">
+                                    <x:String>System</x:String><x:String>Light</x:String><x:String>Dark</x:String>
+                                </RadioButtons>
+                            </StackPanel>
+
+                            <StackPanel x:Name="BarsPage" Spacing="14" Visibility="Collapsed">
+                                <TextBlock Text="Bars" Style="{StaticResource GlassTitleTextStyle}" />
+                                <Grid ColumnSpacing="20">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="240" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="8">
+                                        <ListView x:Name="BarList" MinHeight="260" SelectionChanged="BarList_SelectionChanged" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Content="Add" Click="AddBar_Click" />
+                                            <Button Content="Duplicate" Click="DuplicateBar_Click" />
+                                            <Button Content="Remove" Click="RemoveBar_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="10">
+                                        <TextBox x:Name="BarName" Header="Name" TextChanged="BarEditor_Changed" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <ComboBox x:Name="BarDisplay" Header="Display" MinWidth="180" SelectionChanged="BarEditor_Changed" />
+                                            <ComboBox x:Name="BarPlacement" Header="Placement" MinWidth="130" SelectionChanged="BarEditor_Changed">
+                                                <x:String>Floating</x:String><x:String>Anchored</x:String><x:String>Docked</x:String>
+                                            </ComboBox>
+                                            <ComboBox x:Name="BarEdge" Header="Edge" MinWidth="110" SelectionChanged="BarEditor_Changed">
+                                                <x:String>Top</x:String><x:String>Bottom</x:String><x:String>Left</x:String><x:String>Right</x:String>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <ComboBox x:Name="BarOrientation" Header="Orientation" MinWidth="130" SelectionChanged="BarEditor_Changed">
+                                                <x:String>Horizontal</x:String><x:String>Vertical</x:String>
+                                            </ComboBox>
+                                            <ComboBox x:Name="BarLengthMode" Header="Length mode" MinWidth="130" SelectionChanged="BarEditor_Changed">
+                                                <x:String>FitContent</x:String><x:String>Fixed</x:String><x:String>Fill</x:String>
+                                            </ComboBox>
+                                            <ComboBox x:Name="BarVisualMode" Header="Surface mode" MinWidth="130" SelectionChanged="BarEditor_Changed">
+                                                <x:String>Unified</x:String><x:String>Segmented</x:String><x:String>Minimal</x:String>
+                                            </ComboBox>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <NumberBox x:Name="BarLength" Header="Length" Minimum="120" Maximum="4096" ValueChanged="BarNumber_Changed" />
+                                            <NumberBox x:Name="BarThickness" Header="Thickness" Minimum="28" Maximum="256" ValueChanged="BarNumber_Changed" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="16">
+                                            <ToggleSwitch x:Name="BarAutoHide" Header="Auto-hide" Toggled="BarToggle_Changed" />
+                                            <ToggleSwitch x:Name="BarTopmost" Header="Always on top" Toggled="BarToggle_Changed" />
+                                        </StackPanel>
+                                        <TextBlock Text="Content order" Style="{StaticResource GlassSectionTitleStyle}" />
+                                        <ListView x:Name="BarContentList" MaxHeight="150" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Content="Earlier" Click="ContentEarlier_Click" />
+                                            <Button Content="Later" Click="ContentLater_Click" />
+                                            <Button Content="Remove item" Click="RemoveContent_Click" />
+                                            <Button Content="Fixed spacer" Click="AddFixedSpacer_Click" />
+                                            <Button Content="Flexible spacer" Click="AddFlexibleSpacer_Click" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <ComboBox x:Name="ApplicationSelector" Width="260" PlaceholderText="Choose application"
+                                                      DropDownOpened="ApplicationSelector_DropDownOpened" />
+                                            <Button Content="Add application" Click="AddApplication_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel x:Name="WidgetsPage" Spacing="14" Visibility="Collapsed">
+                                <TextBlock Text="Widgets" Style="{StaticResource GlassTitleTextStyle}" />
+                                <TextBox x:Name="WidgetSearch" PlaceholderText="Search built-in widgets"
+                                         TextChanged="WidgetSearch_TextChanged" />
+                                <Grid ColumnSpacing="20">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Built-in gallery" Style="{StaticResource GlassSectionTitleStyle}" />
+                                        <ListView x:Name="WidgetGallery" MinHeight="300" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Content="Add to Desktop" Click="AddWidgetDesktop_Click" />
+                                            <Button Content="Add to selected Bar" Click="AddWidgetBar_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock Text="Existing instances" Style="{StaticResource GlassSectionTitleStyle}" />
+                                        <ListView x:Name="WidgetInstances" MinHeight="300" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Button Content="Configure" Click="ConfigureWidget_Click" />
+                                            <Button Content="Move" Click="MoveWidget_Click" />
+                                            <Button Content="Duplicate" Click="DuplicateWidget_Click" />
+                                            <Button Content="Remove" Click="RemoveWidget_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel x:Name="AppearancePage" Spacing="14" Visibility="Collapsed">
+                                <TextBlock Text="Appearance" Style="{StaticResource GlassTitleTextStyle}" />
+                                <TextBlock Text="Curated defaults, with precise controls when you want them. Changes apply live."
+                                           Style="{StaticResource GlassCaptionStyle}" />
+                                <ComboBox x:Name="ThemeMode" Header="Theme" SelectionChanged="Appearance_Changed">
+                                    <x:String>System</x:String><x:String>Light</x:String><x:String>Dark</x:String>
+                                </ComboBox>
+                                <ComboBox x:Name="PresetSelector" Header="Material preset" MinWidth="240"
+                                          SelectionChanged="PresetSelector_SelectionChanged" />
+                                <Expander Header="Advanced Material">
+                                    <StackPanel Spacing="10" Padding="0,10,0,0">
+                                        <TextBox x:Name="TintColor" Header="Tint color (#RRGGBB)" TextChanged="Appearance_Changed" />
+                                        <Slider x:Name="MaterialIntensity" Header="Material intensity" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="TintStrength" Header="Tint strength" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="Luminosity" Header="Luminosity" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="BorderStrength" Header="Border strength" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="EdgeStrength" Header="Edge light" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="ShadowStrength" Header="Shadow" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="CornerRadius" Header="Corner radius" Minimum="0" Maximum="40" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                    </StackPanel>
+                                </Expander>
+                                <TextBlock Text="Layout density" Style="{StaticResource GlassSectionTitleStyle}" />
+                                <Slider x:Name="BarPadding" Header="Bar padding" Minimum="2" Maximum="24" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                <Slider x:Name="ItemSpacing" Header="Item spacing" Minimum="0" Maximum="20" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                <Slider x:Name="IconSize" Header="Application icon size" Minimum="20" Maximum="48" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                <ComboBox x:Name="Magnification" Header="Magnification" SelectionChanged="Appearance_Changed">
+                                    <x:String>Off</x:String><x:String>Subtle</x:String><x:String>Expressive</x:String><x:String>Custom</x:String>
+                                </ComboBox>
+                                <Slider x:Name="MaximumScale" Header="Maximum scale" Minimum="1" Maximum="1.35" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Content="Save as custom preset" Click="SavePreset_Click" />
+                                    <Button Content="Duplicate preset" Click="DuplicatePreset_Click" />
+                                    <Button Content="Delete custom preset" Click="DeletePreset_Click" />
+                                    <Button Content="Reset to default" Click="ResetAppearance_Click" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel x:Name="BehaviorPage" Spacing="14" Visibility="Collapsed">
+                                <TextBlock Text="Behavior" Style="{StaticResource GlassTitleTextStyle}" />
+                                <ComboBox x:Name="MotionMode" Header="Motion" SelectionChanged="Behavior_Changed">
+                                    <x:String>System</x:String><x:String>Full</x:String><x:String>Reduced</x:String>
+                                </ComboBox>
+                                <ToggleSwitch x:Name="DirectActivation" Header="Activate single windows directly" Toggled="Behavior_Changed" />
+                                <ToggleSwitch x:Name="ToggleMinimize" Header="Minimize the foreground app when selected again" Toggled="Behavior_Changed" />
+                                <ToggleSwitch x:Name="RunningIndicators" Header="Show running indicators" Toggled="Behavior_Changed" />
+                                <ToggleSwitch x:Name="ShowTooltips" Header="Show application tooltips" Toggled="Behavior_Changed" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="AdvancedPage" Spacing="14" Visibility="Collapsed">
+                                <TextBlock Text="Advanced / About" Style="{StaticResource GlassTitleTextStyle}" />
+                                <TextBlock Text="Glass Phase 3 product experience" />
+                                <TextBlock Text="Local-first. No account. No telemetry." Style="{StaticResource GlassCaptionStyle}" />
+                                <TextBlock x:Name="DiagnosticsText" TextWrapping="Wrap" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Refresh applications" Click="RefreshApplications_Click" />
+                                    <Button Content="Exit Glass" Click="Exit_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

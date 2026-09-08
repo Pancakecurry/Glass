@@ -41,6 +41,12 @@ public sealed partial class ApplicationLaunchService
     public void RequestClose(RunningApplicationWindow window) =>
         _ = PostMessage(window.NativeWindow, WmClose, 0, 0);
 
+    public void RequestCloseAll(IEnumerable<RunningApplicationWindow> windows)
+    {
+        ArgumentNullException.ThrowIfNull(windows);
+        foreach (var window in windows) RequestClose(window);
+    }
+
     public void OpenSoundSettings() =>
         _ = ShellExecute(0, "open", "ms-settings:sound", null, null, SwShowNormal);
 

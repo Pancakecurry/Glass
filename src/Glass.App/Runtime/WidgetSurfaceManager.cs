@@ -5,6 +5,7 @@ namespace Glass.App.Runtime;
 
 internal sealed class WidgetSurfaceManager(
     WindowsDisplayService displays,
+    ProductSurfaceServices services,
     Func<StandaloneWidgetDefinition, Task> persist) : IDisposable
 {
     private readonly Dictionary<Guid, WidgetWindow> _windows = [];
@@ -24,11 +25,15 @@ internal sealed class WidgetSurfaceManager(
         }
         foreach (var surface in desired.Values)
         {
-            if (_windows.ContainsKey(surface.WidgetInstanceId)) continue;
             var instance = layout.WidgetInstances.FirstOrDefault(widget =>
                 widget.WidgetInstanceId == surface.WidgetInstanceId);
             if (instance is null) continue;
-            var window = new WidgetWindow(displays, surface, instance);
+            if (_windows.TryGetValue(surface.WidgetInstanceId, out var existing))
+            {
+                existing.Apply(surface, instance);
+                continue;
+            }
+            var window = new WidgetWindow(displays, services, surface, instance);
             window.DefinitionSettled += OnDefinitionSettled;
             _windows.Add(surface.WidgetInstanceId, window);
             window.Present();

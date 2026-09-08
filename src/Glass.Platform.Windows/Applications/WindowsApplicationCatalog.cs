@@ -5,7 +5,21 @@ namespace Glass.Platform.Windows.Applications;
 
 public sealed class WindowsApplicationCatalog
 {
+    public IReadOnlyList<ApplicationDescriptor> Current { get; private set; } = [];
+
+    public event EventHandler? Refreshed;
+
+    public IReadOnlyList<ApplicationDescriptor> Refresh()
+    {
+        Current = EnumerateCore();
+        Refreshed?.Invoke(this, EventArgs.Empty);
+        return Current;
+    }
+
     public IReadOnlyList<ApplicationDescriptor> Enumerate()
+        => Refresh();
+
+    private static IReadOnlyList<ApplicationDescriptor> EnumerateCore()
     {
         var applications = new Dictionary<ApplicationIdentity, ApplicationDescriptor>();
         var shellType = Type.GetTypeFromProgID("Shell.Application") ??

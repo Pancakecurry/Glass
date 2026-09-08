@@ -6,12 +6,32 @@
         x:Name="Root"
         Background="Transparent"
         PointerEntered="Root_PointerEntered"
-        PointerExited="Root_PointerExited">
-        <StackPanel x:Name="ZonePanel" Spacing="8" Padding="8">
-            <Border x:Name="DragRegion" Padding="12,6" Background="#22000000" CornerRadius="4">
-                <TextBlock Text="Glass bar — development surface" />
-            </Border>
-            <StackPanel x:Name="ContentPanel" Orientation="Horizontal" Spacing="4" />
-        </StackPanel>
+        PointerExited="Root_PointerExited"
+        RightTapped="Root_RightTapped">
+        <Border x:Name="SurfaceChrome" Margin="8" Padding="8">
+            <Grid x:Name="SurfaceLayout">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="StartIsland" Grid.Column="0" Padding="2">
+                    <StackPanel x:Name="StartPanel" Orientation="Horizontal" Spacing="4" />
+                </Border>
+                <Border x:Name="CenterIsland" Grid.Column="1" Padding="2" HorizontalAlignment="Center">
+                    <StackPanel x:Name="CenterPanel" Orientation="Horizontal" Spacing="4" />
+                </Border>
+                <Border x:Name="EndIsland" Grid.Column="2" Padding="2">
+                    <StackPanel x:Name="EndPanel" Orientation="Horizontal" Spacing="4" />
+                </Border>
+            </Grid>
+        </Border>
+        <Border x:Name="EditOutline" Margin="3" BorderThickness="2" CornerRadius="23"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                IsHitTestVisible="False" Visibility="Collapsed" />
+        <Border x:Name="DragRegion" Width="28" Height="4" CornerRadius="2"
+                Background="{ThemeResource TextFillColorSecondaryBrush}"
+                Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,2,0,0" />
     </Grid>
 </Window>

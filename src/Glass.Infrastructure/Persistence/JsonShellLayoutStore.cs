@@ -9,7 +9,7 @@ namespace Glass.Infrastructure.Persistence;
 
 public sealed class JsonShellLayoutStore : IShellLayoutStore
 {
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 3;
     private const string StateKey = "shell-layout";
     private readonly AtomicJsonStateStore _stateStore;
     private readonly LocalDiagnosticLog? _diagnostics;
@@ -100,9 +100,10 @@ public sealed class JsonShellLayoutStore : IShellLayoutStore
 
     private ShellLayout? Migrate(int schemaVersion, JsonElement root)
     {
-        // Schema 0 and 1 used the same bar payload. New schema-2 collections
-        // receive deterministic defaults during normalization.
-        if (schemaVersion is not (0 or 1 or CurrentSchemaVersion) ||
+        // Earlier schemas use the same payload shape. Schema-2 introduced widget
+        // hosts; schema-3 adds optional bar presentation and widget lock fields.
+        // Missing members receive deterministic defaults during deserialization.
+        if (schemaVersion is not (0 or 1 or 2 or CurrentSchemaVersion) ||
             !root.TryGetProperty("payload", out var payload))
         {
             return null;

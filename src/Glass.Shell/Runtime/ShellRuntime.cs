@@ -36,6 +36,8 @@ public sealed class ShellRuntime : IAsyncDisposable
 
     public event Action<Exception>? RuntimeFaulted;
 
+    public event EventHandler? LayoutChanged;
+
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -54,6 +56,7 @@ public sealed class ShellRuntime : IAsyncDisposable
 
         _displays.DisplaysChanged += OnDisplaysChanged;
         _initialized = true;
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask<BarDefinition> CreateBarAsync(
@@ -65,6 +68,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         Layout = CopyWithBars([.. Layout.Bars, definition]);
         CreateSurface(definition);
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
         return definition;
     }
 
@@ -110,6 +114,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         }
 
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask RemoveBarAsync(
@@ -125,6 +130,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         RemoveSurface(id);
         Layout = CopyWithBars(Layout.Bars.Where(bar => bar.Id != id).ToArray());
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask AddWidgetToBarAsync(
@@ -148,6 +154,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         }.Normalize();
         ApplyContentChanges();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask AddStandaloneWidgetAsync(
@@ -168,6 +175,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         }.Normalize();
         ApplyContentChanges();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask RemoveWidgetAsync(
@@ -184,6 +192,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         }.Normalize();
         ApplyContentChanges();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
         if (_stateStore is not null)
             await _stateStore.DeleteAsync($"widget-{widgetInstanceId:N}", cancellationToken);
     }
@@ -206,6 +215,7 @@ public sealed class ShellRuntime : IAsyncDisposable
                     : widget).ToArray(),
         }.Normalize();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask PinApplicationAsync(
@@ -226,6 +236,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         }.Normalize();
         ApplyContentChanges();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask UnpinApplicationAsync(
@@ -245,6 +256,108 @@ public sealed class ShellRuntime : IAsyncDisposable
         }.Normalize();
         ApplyContentChanges();
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async ValueTask UpdateBarContentAsync(
+        BarId barId,
+        IReadOnlyList<BarContentItem> content,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        var existing = Layout.Bars.FirstOrDefault(bar => bar.Id == barId) ??
+            throw new KeyNotFoundException($"Unknown bar {barId}.");
+        await UpdateBarAsync(existing with { Content = content }, cancellationToken);
+    }
+
+    public async ValueTask MoveBarContentAsync(
+        BarId barId,
+        int fromIndex,
+        int toIndex,
+        BarZone? targetZone = null,
+        CancellationToken cancellationToken = default)
+    {
+        var bar = Layout.Bars.FirstOrDefault(candidate => candidate.Id == barId) ??
+            throw new KeyNotFoundException($"Unknown bar {barId}.");
+        await UpdateBarContentAsync(barId,
+            BarContentOperations.Move(bar.Content, fromIndex, toIndex, targetZone),
+            cancellationToken);
+    }
+
+    public async ValueTask MoveWidgetToBarAsync(
+        Guid widgetInstanceId,
+        BarId barId,
+        BarZone zone,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        var instance = Layout.WidgetInstances.FirstOrDefault(widget =>
+            widget.WidgetInstanceId == widgetInstanceId) ??
+            throw new KeyNotFoundException($"Unknown widget {widgetInstanceId}.");
+        await AddWidgetToBarAsync(instance, barId, zone, cancellationToken);
+    }
+
+    public async ValueTask MoveWidgetToDesktopAsync(
+        Guid widgetInstanceId,
+        SurfacePlacement placement,
+        SurfaceZOrder zOrder,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        var instance = Layout.WidgetInstances.FirstOrDefault(widget =>
+            widget.WidgetInstanceId == widgetInstanceId) ??
+            throw new KeyNotFoundException($"Unknown widget {widgetInstanceId}.");
+        await AddStandaloneWidgetAsync(instance, placement, zOrder, cancellationToken);
+    }
+
+    public async ValueTask UpdateWidgetConfigurationAsync(
+        WidgetInstanceDefinition definition,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        if (!Layout.WidgetInstances.Any(widget =>
+            widget.WidgetInstanceId == definition.WidgetInstanceId))
+            throw new KeyNotFoundException($"Unknown widget {definition.WidgetInstanceId}.");
+        Layout = new ShellLayout(Layout.Bars)
+        {
+            StandaloneWidgets = Layout.StandaloneWidgets,
+            WidgetInstances = Layout.WidgetInstances.Select(widget =>
+                widget.WidgetInstanceId == definition.WidgetInstanceId ? definition : widget)
+                .ToArray(),
+        }.Normalize();
+        ApplyContentChanges();
+        await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public async ValueTask<WidgetInstanceDefinition> DuplicateWidgetAsync(
+        Guid widgetInstanceId,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureInitialized();
+        var source = Layout.WidgetInstances.FirstOrDefault(widget =>
+            widget.WidgetInstanceId == widgetInstanceId) ??
+            throw new KeyNotFoundException($"Unknown widget {widgetInstanceId}.");
+        var duplicate = source with { WidgetInstanceId = Guid.NewGuid() };
+        var placement = Layout.StandaloneWidgets.FirstOrDefault(widget =>
+            widget.WidgetInstanceId == widgetInstanceId)?.Placement;
+        if (placement is FloatingPlacement floating)
+        {
+            placement = floating with
+            {
+                Bounds = floating.Bounds with
+                {
+                    X = floating.Bounds.X + 24,
+                    Y = floating.Bounds.Y + 24,
+                },
+            };
+        }
+        placement ??= new FloatingPlacement(
+            WindowsDisplayService.ToTarget(_displays.PrimaryDisplay),
+            new Glass.Core.Geometry.LogicalRect(140, 140, source.Size.Width, source.Size.Height));
+        await AddStandaloneWidgetAsync(
+            duplicate, placement, SurfaceZOrder.Normal, cancellationToken);
+        return duplicate;
     }
 
     public void SetBarVisible(BarId id, bool visible)
@@ -268,6 +381,7 @@ public sealed class ShellRuntime : IAsyncDisposable
             WindowsDisplayService.ToTarget(_displays.PrimaryDisplay));
         CreateSurface(Layout.Bars[0]);
         await SaveAsync(cancellationToken);
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async ValueTask DisposeAsync()
@@ -295,6 +409,7 @@ public sealed class ShellRuntime : IAsyncDisposable
         _saveGate.Dispose();
         _lifetime.Dispose();
         RuntimeFaulted = null;
+        LayoutChanged = null;
     }
 
     private void CreateSurface(BarDefinition definition)
@@ -340,6 +455,7 @@ public sealed class ShellRuntime : IAsyncDisposable
                 .ToArray();
             Layout = CopyWithBars(bars);
             await SaveAsync(_lifetime.Token);
+            LayoutChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -367,6 +483,7 @@ public sealed class ShellRuntime : IAsyncDisposable
             {
                 Layout = CopyWithBars(Layout.Bars.Select(bar => definitions[bar.Id]).ToArray());
                 await SaveAsync(_lifetime.Token);
+                LayoutChanged?.Invoke(this, EventArgs.Empty);
             }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)

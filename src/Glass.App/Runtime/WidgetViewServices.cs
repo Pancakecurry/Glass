@@ -1,0 +1,18 @@
+using Glass.Platform.Windows.Applications;
+using Glass.Platform.Windows.Audio;
+using Glass.Platform.Windows.Location;
+using Glass.Platform.Windows.Media;
+using Glass.Platform.Windows.SystemStatus;
+using Glass.Widgets.BuiltIn.Weather;
+
+namespace Glass.App.Runtime;
+
+internal sealed record WidgetViewServices(
+    SystemMediaSessionService Media,
+    SystemMetricsProvider Metrics,
+    PowerStatusProvider Power,
+    AudioEndpointService Audio,
+    ApplicationLaunchService Launcher,
+    ShellIconService Icons,
+    IWeatherProvider Weather,
+    OneShotLocationService Location);

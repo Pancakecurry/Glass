@@ -29,6 +29,7 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <DeviceCapability Name="location" />
     <rescap:Capability Name="globalMediaControl" />
   </Capabilities>
 </Package>

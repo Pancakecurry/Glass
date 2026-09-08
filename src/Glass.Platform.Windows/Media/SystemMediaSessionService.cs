@@ -10,6 +10,7 @@ public sealed class SystemMediaSessionService : IDisposable
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
     private GlobalSystemMediaTransportControlsSession? _currentSession;
     private Task? _initializationTask;
+    private bool _started;
     private bool _disposed;
 
     public MediaSessionSnapshot Current { get; private set; } =
@@ -17,14 +18,34 @@ public sealed class SystemMediaSessionService : IDisposable
 
     public event Action<MediaSessionSnapshot>? StateChanged;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync() => StartAsync();
+
+    public Task StartAsync()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         lock (_initializationGate)
         {
+            if (_started) return _initializationTask ?? Task.CompletedTask;
+            _started = true;
+            if (_manager is not null)
+            {
+                _manager.CurrentSessionChanged += OnCurrentSessionChanged;
+                return ReplaceCurrentSessionAsync(_manager.GetCurrentSession());
+            }
             return _initializationTask ??= InitializeCoreAsync();
         }
+    }
+
+    public ValueTask StopAsync()
+    {
+        if (!_started) return ValueTask.CompletedTask;
+        _started = false;
+        DetachCurrentSession();
+        if (_manager is not null)
+            _manager.CurrentSessionChanged -= OnCurrentSessionChanged;
+        Publish(MediaSessionSnapshot.NoSession);
+        return ValueTask.CompletedTask;
     }
 
     public async Task<bool> TrySkipPreviousAsync() =>
@@ -69,6 +90,7 @@ public sealed class SystemMediaSessionService : IDisposable
         }
 
         _disposed = true;
+        _started = false;
         DetachCurrentSession();
 
         if (_manager is not null)
@@ -92,6 +114,7 @@ public sealed class SystemMediaSessionService : IDisposable
             }
 
             _manager = manager;
+            if (!_started) return;
             _manager.CurrentSessionChanged += OnCurrentSessionChanged;
             await ReplaceCurrentSessionAsync(manager.GetCurrentSession());
         }
@@ -154,7 +177,7 @@ public sealed class SystemMediaSessionService : IDisposable
     private async Task ReplaceCurrentSessionAsync(
         GlobalSystemMediaTransportControlsSession? session)
     {
-        if (_disposed)
+        if (_disposed || !_started)
         {
             return;
         }

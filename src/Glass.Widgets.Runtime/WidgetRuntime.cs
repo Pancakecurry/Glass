@@ -13,6 +13,9 @@ public sealed class WidgetRuntime : IAsyncDisposable
 
     public IReadOnlyCollection<IWidgetInstance> Instances => _instances.Values;
 
+    public bool TryGet(WidgetInstanceId id, out IWidgetInstance? instance) =>
+        _instances.TryGetValue(id, out instance);
+
     public async ValueTask<IWidgetInstance> CreateAsync(
         WidgetInstanceConfiguration configuration,
         CancellationToken cancellationToken = default)

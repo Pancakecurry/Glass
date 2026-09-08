@@ -8,8 +8,9 @@ namespace Glass.App.Runtime;
 internal sealed class BarSurfaceFactory(
     WindowsDisplayService displays,
     RunningWindowTracker runningWindows,
-    ApplicationLaunchService launcher) : IBarSurfaceFactory
+    ApplicationLaunchService launcher,
+    ProductSurfaceServices services) : IBarSurfaceFactory
 {
     public IBarSurface Create(BarDefinition definition) =>
-        new BarWindow(displays, runningWindows, launcher, definition);
+        new BarWindow(displays, runningWindows, launcher, services, definition);
 }

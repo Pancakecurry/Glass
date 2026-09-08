@@ -10,5 +10,9 @@ internal static class ProductBranding
     public const string DevelopmentControlsWindowTitle =
         EngineeringCodename + " — Development Shell Controls";
 
+    public const string ControlCenterWindowTitle = EngineeringCodename + " Control Center";
+
+    public const string ControlCenterWindowTitle = EngineeringCodename + " Control Center";
+
     public const string BarWindowTitle = EngineeringCodename + " bar";
 }
