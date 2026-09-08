@@ -35,7 +35,7 @@ public sealed class WindowsDisplayService : IDisposable
                 return primary;
             }
 
-            return _displays.Count > 0
+            return _displays.Length > 0
                 ? _displays[0]
                 : throw new InvalidOperationException("Windows reported no display areas.");
         }

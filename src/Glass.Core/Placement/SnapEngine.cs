@@ -44,7 +44,7 @@ public static class SnapEngine
             ScreenEdge.Right => fitted with { X = workArea.Right - fitted.Width },
             ScreenEdge.Top => fitted with { Y = workArea.Y },
             ScreenEdge.Bottom => fitted with { Y = workArea.Bottom - fitted.Height },
-            _ => throw new ArgumentOutOfRangeException(),
+            _ => throw new InvalidOperationException("Snap edge was not recognized."),
         };
 
         var offset = nearest.Edge is ScreenEdge.Top or ScreenEdge.Bottom
