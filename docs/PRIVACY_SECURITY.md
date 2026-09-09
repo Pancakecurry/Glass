@@ -69,6 +69,8 @@ Phase 1 introduces no network, account, telemetry, authentication, arbitrary plu
 - Configuration reset creates a local backup and preserves personal widget state
   by default.
 - Package capabilities remain limited to internet client for optional weather,
-  explicit one-shot location, and global media control.
+  explicit one-shot location, global media control, and the schema-required
+  `runFullTrust` declaration for a medium-integrity WinUI desktop process.
+  `runFullTrust` does not elevate Glass or grant administrator rights.
 - Signing certificates, passwords, private keys, and release-host credentials
   are CI secrets/external inputs and must never enter Git.
