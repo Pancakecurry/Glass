@@ -3,8 +3,8 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
-  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap5 rescap">
+  xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
+  IgnorableNamespaces="uap uap5 uap7">
   <Identity Name="Pancakecurry.Glass" Publisher="CN=Glass" Version="0.9.0.0" />
   <Properties>
     <DisplayName>Glass</DisplayName>
@@ -41,7 +41,7 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <uap7:Capability Name="globalMediaControl" />
     <DeviceCapability Name="location" />
-    <rescap:Capability Name="globalMediaControl" />
   </Capabilities>
 </Package>
