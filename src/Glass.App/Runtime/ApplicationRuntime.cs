@@ -1,5 +1,6 @@
 using Glass.App.Widgets;
 using Glass.Core.Appearance;
+using Glass.Core.Shell;
 using Glass.Infrastructure.Diagnostics;
 using Glass.Infrastructure.Persistence;
 using Glass.Infrastructure.Storage;
