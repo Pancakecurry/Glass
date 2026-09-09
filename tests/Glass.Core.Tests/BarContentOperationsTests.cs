@@ -1,5 +1,6 @@
 using Glass.Core.Applications;
 using Glass.Core.Shell;
+using Xunit;
 
 namespace Glass.Core.Tests;
 

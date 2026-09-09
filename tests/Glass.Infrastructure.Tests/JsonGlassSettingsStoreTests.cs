@@ -1,6 +1,7 @@
 using Glass.Core.Appearance;
 using Glass.Infrastructure.Persistence;
 using Glass.Infrastructure.Storage;
+using Xunit;
 
 namespace Glass.Infrastructure.Tests;
 
