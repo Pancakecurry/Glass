@@ -9,12 +9,13 @@ public sealed class WidgetRuntimeTests
     [Fact]
     public async Task LifecycleTransitionsAreIdempotent()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var instance = new TestInstance(Configuration());
-        await instance.MountAsync();
-        await instance.MountAsync();
-        await instance.SetVisibleAsync(true);
-        await instance.SetVisibleAsync(true);
-        await instance.SetVisibleAsync(false);
+        await instance.MountAsync(cancellationToken);
+        await instance.MountAsync(cancellationToken);
+        await instance.SetVisibleAsync(true, cancellationToken);
+        await instance.SetVisibleAsync(true, cancellationToken);
+        await instance.SetVisibleAsync(false, cancellationToken);
         Assert.Equal(1, instance.Mounts);
         Assert.Equal(2, instance.VisibilityChanges);
         Assert.Equal(WidgetLifecycleState.Suspended, instance.State);
@@ -26,17 +27,18 @@ public sealed class WidgetRuntimeTests
     [Fact]
     public async Task SharedProviderStartsAndStopsAtVisibilityBoundaries()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         var provider = new TestProvider();
         await using var coordinator = new ProviderCoordinator();
         coordinator.Register(provider);
         var one = WidgetInstanceId.New();
         var two = WidgetInstanceId.New();
-        await coordinator.SetVisibleAsync("test", one, true);
-        await coordinator.SetVisibleAsync("test", two, true);
-        await coordinator.SetVisibleAsync("test", one, false);
+        await coordinator.SetVisibleAsync("test", one, true, cancellationToken);
+        await coordinator.SetVisibleAsync("test", two, true, cancellationToken);
+        await coordinator.SetVisibleAsync("test", one, false, cancellationToken);
         Assert.Equal(1, provider.Starts);
         Assert.Equal(0, provider.Stops);
-        await coordinator.SetVisibleAsync("test", two, false);
+        await coordinator.SetVisibleAsync("test", two, false, cancellationToken);
         Assert.Equal(1, provider.Stops);
     }
 

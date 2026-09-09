@@ -33,6 +33,7 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
     private readonly GlassDataPaths _dataPaths;
     private readonly StartupActivation _activation;
     private readonly Func<bool, Task> _restartApplication;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
     private readonly System.Diagnostics.Stopwatch _startupClock =
         System.Diagnostics.Stopwatch.StartNew();
     private readonly SemaphoreSlim _widgetSyncGate = new(1, 1);
@@ -80,6 +81,8 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
     {
         _activation = activation;
         _restartApplication = restartApplication;
+        _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()
+            ?? throw new InvalidOperationException("Glass must initialize its runtime on the UI thread.");
         var packagedRoot = PackageIdentityService.TryGetLocalDataPath();
         _dataPaths = packagedRoot is null
             ? GlassDataPaths.CreateDefault()
@@ -216,7 +219,7 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
 
     public void Activate()
     {
-        Microsoft.UI.Xaml.Application.Current.DispatcherQueue.TryEnqueue(PresentControlCenter);
+        _dispatcherQueue.TryEnqueue(PresentControlCenter);
     }
 
     public async ValueTask DisposeAsync()

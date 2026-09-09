@@ -34,9 +34,9 @@ internal sealed class SystemWidgetViews(WidgetViewServices services)
         row.Children.Add(metadata);
         panel.Children.Add(row);
         panel.Children.Add(Actions(
-            AsyncAction("\uE892", "Previous", () => services.Media.TrySkipPreviousAsync().AsTask()),
-            AsyncAction("\uE768", "Play or pause", () => services.Media.TryTogglePlayPauseAsync().AsTask()),
-            AsyncAction("\uE893", "Next", () => services.Media.TrySkipNextAsync().AsTask())));
+            AsyncAction("\uE892", "Previous", services.Media.TrySkipPreviousAsync),
+            AsyncAction("\uE768", "Play or pause", services.Media.TryTogglePlayPauseAsync),
+            AsyncAction("\uE893", "Next", services.Media.TrySkipNextAsync)));
         var timeline = new Slider { Minimum = 0, Maximum = 1, IsEnabled = false };
         if (mode != WidgetViewMode.Compact)
         {

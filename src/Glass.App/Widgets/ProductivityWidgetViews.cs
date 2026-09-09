@@ -104,7 +104,7 @@ internal sealed class ProductivityWidgetViews
             {
                 elapsed.Text = FormatTime(instance.Stopwatch.Elapsed, tenths: true);
                 laps.Text = instance.Stopwatch.State.Laps.Count == 0 ? "No laps" :
-                    string.Join("  ", instance.Stopwatch.State.Laps.TakeLast(4).Select(FormatTime));
+                    string.Join("  ", instance.Stopwatch.State.Laps.TakeLast(4).Select(lap => FormatTime(lap)));
             });
         refresh.Attach();
         return panel;
