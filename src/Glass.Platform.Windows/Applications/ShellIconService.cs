@@ -181,6 +181,7 @@ public sealed partial class ShellIconService : IDisposable
     private static partial nint CreateCompatibleDC(nint dc);
 
     [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool DeleteDC(nint dc);
 
     [LibraryImport("gdi32.dll")]
@@ -191,6 +192,7 @@ public sealed partial class ShellIconService : IDisposable
     private static partial nint SelectObject(nint dc, nint value);
 
     [LibraryImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool DeleteObject(nint value);
 
     [LibraryImport("user32.dll")]

@@ -12,7 +12,5 @@ internal static class ProductBranding
 
     public const string ControlCenterWindowTitle = EngineeringCodename + " Control Center";
 
-    public const string ControlCenterWindowTitle = EngineeringCodename + " Control Center";
-
     public const string BarWindowTitle = EngineeringCodename + " bar";
 }
