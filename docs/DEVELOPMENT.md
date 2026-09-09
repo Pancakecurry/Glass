@@ -43,6 +43,14 @@ These are intended Windows commands, not runtime-validation results from macOS.
 
 Pure Core tests may run cross-platform when the matching SDK is available. Windows runtime behavior must be manually validated on Windows hardware. Do not simulate Windows to make a result look green. Report missing SDKs, unavailable Windows tooling, restore failures, and untested runtime behavior plainly.
 
-## Future packaging
+## Packaging and release
 
-Release packaging is intentionally not implemented in Phase 1. The leading future direction is MSIX or MSIXBundle as a single-installation experience; ADR 006 remains subject to real Windows deployment testing.
+Unpackaged development remains the default and keeps startup-task controls
+unavailable. Packaged release builds are selected with
+`-p:GlassPackageMode=Packaged`, use an architecture-specific RID, and are
+self-contained. See `RELEASE.md` for exact commands, bundle generation, App
+Installer metadata, signing inputs, and the Windows-only validation boundary.
+
+The ordinary Windows workflow compiles x64, ARM64, and x86 and runs deterministic
+tests once. The separate release workflow creates the three MSIX packages and an
+MSIXBundle. Do not treat unsigned workflow artifacts as public installers.

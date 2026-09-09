@@ -85,3 +85,19 @@ Glass.App explicitly composes `ApplicationRuntime`, local stores, platform provi
 ## Configuration policy
 
 global.json selects a .NET 10 SDK baseline with feature-band roll-forward. Directory.Build.props holds shared compiler and build defaults. Directory.Packages.props centrally pins the intentionally small package set. design/tokens.json is the Phase 3 semantic design source. `Glass.Rendering` and shared WinUI resources translate those semantics into native materials and controls; user settings remain sparse overrides rather than duplicated themes.
+
+## Phase 4 production runtime
+
+ApplicationRuntime now composes activation intent, session health, adaptive
+rendering policy, startup-task state, fullscreen observation, and redacted local
+diagnostics. These are orchestration responsibilities; pure decision rules stay
+in Core and documented Windows adapters stay in Platform.Windows. The production
+Control Center code-behind is split by page responsibility, widget factories only
+route to focused presenters, and bar application-item presentation is isolated
+from surface lifecycle.
+
+Packaged and unpackaged modes share one application project. Unpackaged is the
+developer default. Packaged Release is self-contained, identity-bearing MSIX;
+architecture-specific packages are combined externally by the release workflow.
+Package-associated local data is used when identity exists, while development
+continues under `%LOCALAPPDATA%/Glass`. No packaging concern crosses into Core.

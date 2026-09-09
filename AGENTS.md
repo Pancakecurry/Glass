@@ -27,11 +27,10 @@ These rules apply to every future coding agent working in this repository.
 
 ## Phase discipline
 
-Phase 3 establishes the product experience, including the native material system,
-Control Center, Edit Mode, final application/widget presentation, and semantic
-motion. Do not begin Phase 4 packaging, updater, startup productization,
-benchmark campaign, release architecture matrix, or manual Windows hardening
-until Phase 3 has passed orchestrator review.
+Phase 4 hardens the approved product experience and establishes packaging,
+recovery, accessibility, compatibility, startup, diagnostics, and release
+infrastructure. Do not add new V1 feature scope or begin Phase 5 manual Windows
+QA and release-candidate refinement until Phase 4 has passed orchestrator review.
 
 Do not add browser mocks, Playwright, screenshot regression tests, screenshot-based QA infrastructure, shell emulators, fake monitor frameworks, or elaborate integration-test infrastructure.
 

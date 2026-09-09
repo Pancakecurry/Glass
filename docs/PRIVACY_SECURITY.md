@@ -56,3 +56,19 @@ Phase 1 introduces no network, account, telemetry, authentication, arbitrary plu
 - Weather location is either manually entered or requested once after the user presses Use device location; there is no automatic or background location request.
 - Notes and clipboard values are excluded from diagnostics and telemetry remains absent.
 - Materials, icons, and motion require no network access.
+
+## Phase 4 release and recovery boundaries
+
+- Onboarding requires no account and requests no weather/location permission.
+- Start with Windows uses the packaged user startup-task API and no registry,
+  Startup-folder, scheduled-task, elevation, or administrator workaround.
+- Session-health data contains only lifecycle timestamps, a failure count, and a
+  local recovery category.
+- Copied/exported diagnostics exclude note text, clipboard data, weather
+  coordinates, and arbitrary user paths; no upload path exists.
+- Configuration reset creates a local backup and preserves personal widget state
+  by default.
+- Package capabilities remain limited to internet client for optional weather,
+  explicit one-shot location, and global media control.
+- Signing certificates, passwords, private keys, and release-host credentials
+  are CI secrets/external inputs and must never enter Git.

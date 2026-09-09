@@ -83,3 +83,9 @@ Weather and other internet-dependent features must be optional, isolated, and in
 ## Scope rules
 
 Any feature proposal must explain its user value, privacy impact, Windows compatibility impact, performance cost, and ownership within the project boundaries. A roadmap item is not permission to implement it before its orchestrated phase.
+
+Phase 4 adds no product feature scope. Onboarding, Safe Mode, diagnostics,
+packaged startup, native updates, and release packaging are productization and
+recovery surfaces for the approved V1 behavior. Phase 5 is limited to manual
+Windows validation, defect correction, visual refinement, and release-candidate
+work.

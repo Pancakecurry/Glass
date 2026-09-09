@@ -57,3 +57,26 @@ These paths have compile-time coverage only until the Phase 1 branch runs in Win
 Phase 2 Windows adapters are capability-sensitive. AppsFolder enumeration, AUMID activation, GSMTC, Core Audio, clipboard history, power APIs, and shell icons must fail locally without taking down bars or unrelated widgets. Runtime API availability remains required across Windows 10 1809 and Windows 11. The x64 Windows CI build is a compile/test gate, not proof of runtime compatibility.
 
 Phase 3 adds centralized runtime fallback decisions: High Contrast forces Solid material, reduced motion removes magnification and overshoot, optional clipboard history and one-shot location report unavailable or denied states locally, and weather cache failure does not affect the shell. Clear, Frost, Smoke, and Crystal use supported Windows App SDK backdrops only; no undocumented DWM path exists. x86, ARM64, Windows 10, and Windows 11 runtime behavior remain unvalidated until their later release matrix and hardware pass.
+
+## Phase 4 compatibility matrix
+
+| Environment | Intended behavior | Phase 4 evidence |
+|---|---|---|
+| Windows 10 1809+ | Architectural minimum; guarded optional APIs; simpler effects where required | Compile/package target only |
+| Windows 10 22H2 | Supported shell/widget behavior | Compile target; manual QA pending |
+| Current Windows 11 | Primary material and interaction experience | Compile target; manual QA pending |
+| x64 | Full release path | Windows CI build/package |
+| ARM64 | Native release path | Windows CI build/package; hardware QA pending |
+| x86 | Practical legacy path | Windows CI build/package; runtime QA pending |
+| RDP | Auto Reduced quality; no magnification | Pure policy + compile path |
+| High Contrast | Solid material overrides user quality | Pure policy + live settings event |
+| Reduced motion | No magnification/overshoot; short or immediate transitions | Policy and motion mapping |
+| No battery | Battery widget unavailable state | Existing provider fallback |
+| No network | Shell remains usable; weather uses cache/unavailable state | Provider isolation |
+| No media session | Media widget disabled/no-session state | Event-backed provider fallback |
+| No location permission | Manual coordinates remain available | One-shot permission path only |
+
+Explorer recreation, suspend/resume, session lock/unlock, display changes,
+default audio endpoint changes, and media-session changes have documented
+message/event recovery paths. Every row still requires Phase 5 runtime validation
+on representative real Windows systems.

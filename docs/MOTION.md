@@ -30,3 +30,12 @@ Spring behavior is reserved for physical attachment and continuity. It must be t
 Reduced motion must be a first-class state. It should shorten or remove non-essential interpolation while preserving feedback, focus, object identity, and task completion. A global switch must not be the only consideration; the system should also avoid animating when a surface is invisible or occluded.
 
 System, Full, and Reduced preferences resolve through `MotionPolicy`. Reduced mode removes magnification and overshoot, shortens non-essential transitions, and preserves state feedback. Windows runtime timing and high-refresh behavior still require manual hardware validation.
+
+## Runtime constraints
+
+The Phase 4 rendering policy can suppress full motion in energy saver, remote,
+High Contrast, Safe Mode, or effects-disabled environments. That runtime gate is
+combined with the user's System/Full/Reduced preference and the live Windows
+animation setting. Suppression removes magnification and spring behavior while
+preserving immediate state transitions. Semantic timer values never depend on
+animation frames or presentation ticks.

@@ -65,4 +65,13 @@ Appearance resolves through `global -> surface override -> widget-specific overr
 
 Surfaces should be composed with intentional depth and readable grouping. Controls should be discoverable without making every region a card. Settings should be organized around user goals and visible consequences rather than a wall of technical switches. Repeated patterns should use the same semantic tokens and interaction language.
 
-Shared styles define normal, hover, pressed, focus, selected, and disabled states. Segoe UI Variable is preferred with Windows fallbacks. Fluent/system glyphs identify Glass actions; application icons always remain the applications' own Shell icons. Normal product startup uses Control Center, bars, and widget surfaces—not the retained development diagnostics window.
+Shared styles define normal, hover, pressed, focus, selected, and disabled states. Segoe UI Variable is preferred with Windows fallbacks. Fluent/system glyphs identify Glass actions; application icons always remain the applications' own Shell icons. Normal product startup uses Control Center, bars, and widget surfaces; local diagnostics live under Advanced.
+
+## Runtime quality adaptation
+
+Phase 4 applies the same semantic visual language through Full, Balanced,
+Reduced, and Solid renderer policies. These are capability/efficiency tiers, not
+separate themes. Reduced removes costly shadow and magnification treatment;
+Solid removes translucent backdrop work. High Contrast always uses the safe
+Solid path. User material, theme, and hierarchy semantics remain recognizable
+at every tier.

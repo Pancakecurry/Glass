@@ -2,7 +2,10 @@
 
 Glass is the internal engineering codename for a native Windows shell-enhancement product. The eventual product will provide a freely positionable and resizable taskbar or dock, native desktop widgets, a configurable translucent material system, and carefully designed motion while remaining local-first, private, and performant.
 
-This repository is at **Phase 3 of 5 — Product Experience**. It contains the native taskbar and widget experience, the centralized Glass material and motion systems, a production Control Center, in-place Edit Mode, and local versioned appearance settings.
+This repository is at **Phase 4 of 5 — Hardening and Distribution**. Glass is
+feature-complete for the planned V1 scope; this phase adds recovery, adaptive
+quality, accessibility hardening, onboarding, packaged startup, diagnostics,
+and native release infrastructure.
 
 ## Technology baseline
 
@@ -18,7 +21,12 @@ The minimum architectural Windows target is Windows 10 version 1809, build 17763
 
 ## Development status
 
-Phase 3 completes the functional application and trusted Tier 0/Tier 1 widget presentation, adds global and per-surface appearance inheritance, curated/custom presets, unified/segmented/minimal bars, native menus, icon magnification, reduced-motion mapping, and Control Center editing. Windows runtime, visual, shell, mixed-DPI, multi-monitor, media, audio, clipboard, location, and packaging behavior still requires manual validation on real Windows hardware.
+Phase 4 preserves the Phase 3 experience while decomposing large UI/runtime
+files, adding event-driven Explorer/session/display/device recovery, Safe Mode,
+local redacted diagnostics, self-contained multi-architecture MSIX packaging,
+and an App Installer release path. Windows runtime, visual, shell, mixed-DPI,
+multi-monitor, installation, update, and uninstall behavior still requires
+manual validation on real Windows hardware.
 
 ## Repository map
 
@@ -33,7 +41,7 @@ Phase 3 completes the functional application and trusted Tier 0/Tier 1 widget pr
     src/Glass.Widgets.BuiltIn      Trusted first-party widget implementation boundary
     tests/Glass.Core.Tests         Small cross-platform tests for deterministic Core logic
     tests/Glass.Infrastructure.Tests Cross-platform persistence and recovery tests
-    design/tokens.json              Phase 3 semantic design-token source
+    design/tokens.json              Semantic design-token source
     docs/                           Product, architecture, design, performance, and privacy contracts
     adr/                            Architecture Decision Records
 
@@ -62,7 +70,10 @@ Use a Windows development machine with the .NET 10 SDK and a Visual Studio insta
     dotnet test tests/Glass.Widgets.BuiltIn.Tests/Glass.Widgets.BuiltIn.Tests.csproj -c Debug
     dotnet run --project src/Glass.App/Glass.App.csproj -c Debug -p:Platform=x64
 
-The application remains unpackaged in Phase 3. MSIX or MSIXBundle remains the leading distribution direction, but release packaging is still deferred; see ADR 006.
+The default developer configuration remains unpackaged. Production release
+configuration creates self-contained x64, ARM64, and x86 MSIX packages and a
+combined MSIXBundle; see `docs/RELEASE.md`. Public distribution still requires
+a trusted signing certificate supplied outside the repository.
 
 The local commands above cannot be run in this macOS workspace because the .NET SDK is not installed. The Windows CI workflow is the compile/test gate; WinUI runtime behavior still requires manual Windows hardware validation.
 
@@ -72,8 +83,13 @@ The product is designed to work without an account, required backend, telemetry,
 
 ## Current and next milestone
 
-Current phase: **Phase 3 of 5 — Product Experience**
+Current phase: **Phase 4 of 5 — Hardening and Distribution**
 
-The Phase 0B evidence remains in `docs/TECHNICAL_SPIKE.md`; Phase 1 architecture remains in `docs/PHASE_1_RUNTIME_SHELL.md`; Phase 2 functional architecture remains in `docs/PHASE_2_APPS_WIDGETS.md`; and the Phase 3 implementation is described in `docs/PHASE_3_PRODUCT_EXPERIENCE.md`. Phase 4 must not begin before orchestrator review.
+The Phase 0B evidence remains in `docs/TECHNICAL_SPIKE.md`; Phase 1 architecture
+is in `docs/PHASE_1_RUNTIME_SHELL.md`; Phase 2 functional architecture is in
+`docs/PHASE_2_APPS_WIDGETS.md`; Phase 3 product experience is in
+`docs/PHASE_3_PRODUCT_EXPERIENCE.md`; and this phase is documented in
+`docs/PHASE_4_HARDENING_DISTRIBUTION.md`. The next milestone is Phase 5 manual
+Windows QA and release-candidate refinement; do not begin it before review.
 
 Read AGENTS.md before making changes, then read the relevant product and architecture documents for the subsystem being changed.

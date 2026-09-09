@@ -65,3 +65,23 @@ No performance number in this document is a benchmark result. Phase 1 adds no te
 - Weather remains explicit, serialized, cached, and absent from startup work.
 
 No Phase 3 budget is claimed as achieved until profiling on supported Windows hardware.
+
+## Phase 4 idle architecture
+
+- Normal startup creates shell surfaces but network providers remain lazy.
+- Windows-startup activation does not construct Control Center.
+- One shared Clipboard service owns the event subscription for all clipboard
+  widget consumers.
+- Timer, stopwatch, and Pomodoro presentation timers exist only while loaded and
+  semantically running; correctness comes from timestamps, not tick counts.
+- Explorer, foreground, display, session, power, audio, media, and clipboard
+  changes use event/message paths rather than permanent scans.
+- Auto rendering quality reduces shadows, magnification, transparency, and
+  decorative motion under energy saver and remote sessions.
+- Safe Mode restores only the minimum surface set with Solid rendering.
+- Diagnostics are sampled only when the Advanced page requests a snapshot.
+
+The release configuration is self-contained for installation reliability. Its
+larger package size is an intentional distribution tradeoff and does not imply a
+larger steady-state process footprint. Idle CPU/GPU, startup, and memory budgets
+remain aspirational until Phase 5 profiling on real Windows systems.
