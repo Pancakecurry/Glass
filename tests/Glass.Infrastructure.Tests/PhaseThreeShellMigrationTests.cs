@@ -18,7 +18,7 @@ public sealed class PhaseThreeShellMigrationTests : IDisposable
         paths.EnsureCreated();
         var state = new AtomicJsonStateStore(paths);
         var fallback = ShellLayout.CreateDefault(new DisplayTarget("primary", true,
-            new Glass.Core.Geometry.LogicalRect(0, 0, 1920, 1080)));
+            new NativePixelRect(0, 0, 1920, 1080)));
         var legacy = """
             {"schemaVersion":2,"payload":{"bars":[],"standaloneWidgets":[],"widgetInstances":[]}}
             """;
