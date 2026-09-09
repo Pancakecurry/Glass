@@ -55,9 +55,8 @@ jobs:
           --no-restore
           --property:Platform=x64
           --property:GlassPackageMode=Unpackaged
+          --property:GlassPortableBuild=true
           --property:WindowsPackageType=None
-          --property:SelfContained=true
-          --property:WindowsAppSDKSelfContained=true
           --property:PublishSingleFile=false
           --property:PublishTrimmed=false
           --property:BaseOutputPath="$pwd\portable-bin\"
