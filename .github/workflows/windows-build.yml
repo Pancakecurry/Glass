@@ -16,6 +16,10 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, ARM64, x86]
     steps:
       - uses: actions/checkout@v5
 
@@ -28,7 +32,20 @@ jobs:
         run: dotnet restore Glass.sln
 
       - name: Build Windows application
-        run: dotnet build src/Glass.App/Glass.App.csproj --configuration Release --no-restore --property:Platform=x64
+        run: dotnet build src/Glass.App/Glass.App.csproj --configuration Release --no-restore --property:Platform=${{ matrix.platform }}
+
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Glass.sln
 
       - name: Test Core
         run: dotnet test tests/Glass.Core.Tests/Glass.Core.Tests.csproj --configuration Release --no-restore

@@ -10,7 +10,22 @@
     <Platforms>AnyCPU;x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
-    <WindowsPackageType>None</WindowsPackageType>
+    <GlassPackageMode Condition="'$(GlassPackageMode)' == ''">Unpackaged</GlassPackageMode>
+    <WindowsPackageType Condition="'$(GlassPackageMode)' != 'Packaged'">None</WindowsPackageType>
+    <WindowsPackageType Condition="'$(GlassPackageMode)' == 'Packaged'">MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="'$(GlassPackageMode)' == 'Packaged'">true</WindowsAppSDKSelfContained>
+    <SelfContained Condition="'$(GlassPackageMode)' == 'Packaged'">true</SelfContained>
+    <RuntimeIdentifier Condition="'$(GlassPackageMode)' == 'Packaged' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(GlassPackageMode)' == 'Packaged' and '$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(GlassPackageMode)' == 'Packaged' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <GenerateAppxPackageOnBuild Condition="'$(GlassPackageMode)' == 'Packaged'">true</GenerateAppxPackageOnBuild>
+    <AppxPackageSigningEnabled Condition="'$(AppxPackageSigningEnabled)' == ''">false</AppxPackageSigningEnabled>
+    <AppxBundle Condition="'$(GlassPackageMode)' == 'Packaged'">Never</AppxBundle>
+    <AppxPackageDir Condition="'$(GlassPackageMode)' == 'Packaged'">$(MSBuildProjectDirectory)\AppPackages\</AppxPackageDir>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <HoursBetweenUpdateChecks>8</HoursBetweenUpdateChecks>
+    <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>
+    <AppxPackageVersion>$(GlassPackageVersion)</AppxPackageVersion>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
 
@@ -27,5 +42,16 @@
     <ProjectReference Include="..\Glass.Widgets.Abstractions\Glass.Widgets.Abstractions.csproj" />
     <ProjectReference Include="..\Glass.Widgets.BuiltIn\Glass.Widgets.BuiltIn.csproj" />
     <ProjectReference Include="..\Glass.Widgets.Runtime\Glass.Widgets.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Distribution\Glass.appinstaller.template" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Square44x44Logo.png" />
+    <Content Include="Assets\Square150x150Logo.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\SmallTile.png" />
+    <Content Include="Assets\LargeTile.png" />
+    <Content Include="Assets\Wide310x150Logo.png" />
+    <None Update="Assets\GlassMarkSource.png" />
   </ItemGroup>
 </Project>

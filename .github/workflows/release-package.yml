@@ -1,0 +1,153 @@
+name: Package release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release_metadata:
+        description: Generate App Installer metadata when the release URI variable is configured
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  GLASS_PUBLISHER: ${{ vars.GLASS_PACKAGE_PUBLISHER || 'CN=Glass' }}
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore Glass.sln
+      - name: Deterministic tests
+        run: dotnet test Glass.sln --configuration Release --no-restore --property:Platform=x64
+
+  package:
+    needs: test
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: x64
+            rid: win-x64
+          - platform: ARM64
+            rid: win-arm64
+          - platform: x86
+            rid: win-x86
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Read centralized package version
+        shell: pwsh
+        run: |
+          $project = [xml](Get-Content Directory.Build.props)
+          "GLASS_VERSION=$($project.Project.PropertyGroup.GlassPackageVersion)" | Out-File $env:GITHUB_ENV -Append
+      - name: Restore architecture
+        run: dotnet restore src/Glass.App/Glass.App.csproj --runtime ${{ matrix.rid }} --property:Platform=${{ matrix.platform }}
+      - name: Build unsigned self-contained MSIX
+        shell: pwsh
+        run: >-
+          dotnet publish src/Glass.App/Glass.App.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --no-restore
+          --property:Platform=${{ matrix.platform }}
+          --property:GlassPackageMode=Packaged
+          --property:AppxPackageSigningEnabled=false
+          --property:AppxPackagePublisher="$env:GLASS_PUBLISHER"
+      - name: Locate architecture package
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem src/Glass.App/AppPackages -Recurse -Filter *.msix)
+          if ($packages.Count -ne 1) { throw "Expected one MSIX; found $($packages.Count)." }
+          New-Item staging -ItemType Directory -Force | Out-Null
+          Copy-Item $packages[0].FullName "staging/Glass_${env:GLASS_VERSION}_${{ matrix.platform }}.msix"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Glass-msix-${{ matrix.platform }}
+          path: staging/*.msix
+          if-no-files-found: error
+
+  bundle:
+    needs: package
+    runs-on: windows-latest
+    env:
+      GLASS_RELEASE_BASE_URI: ${{ vars.GLASS_RELEASE_BASE_URI }}
+      GLASS_SIGNING_PFX_BASE64: ${{ secrets.GLASS_SIGNING_PFX_BASE64 }}
+      GLASS_SIGNING_PASSWORD: ${{ secrets.GLASS_SIGNING_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: Glass-msix-*
+          path: bundle-input
+          merge-multiple: true
+      - name: Read centralized package version
+        shell: pwsh
+        run: |
+          $project = [xml](Get-Content Directory.Build.props)
+          "GLASS_VERSION=$($project.Project.PropertyGroup.GlassPackageVersion)" | Out-File $env:GITHUB_ENV -Append
+      - name: Create and validate MSIXBundle
+        shell: pwsh
+        run: |
+          $sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Directory |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+          if (-not $sdk) { throw 'Windows SDK packaging tools were not found.' }
+          $makeAppx = Join-Path $sdk.FullName 'x64\MakeAppx.exe'
+          $packages = @(Get-ChildItem bundle-input -Filter *.msix)
+          if ($packages.Count -ne 3) { throw "Expected three architecture packages; found $($packages.Count)." }
+          New-Item release -ItemType Directory -Force | Out-Null
+          & $makeAppx bundle /d bundle-input /p "release/Glass_${env:GLASS_VERSION}.msixbundle" /o
+          if ($LASTEXITCODE -ne 0) { throw 'MakeAppx bundle failed.' }
+          New-Item bundle-validation -ItemType Directory -Force | Out-Null
+          & $makeAppx unbundle /p "release/Glass_${env:GLASS_VERSION}.msixbundle" /d bundle-validation /o
+          if ($LASTEXITCODE -ne 0) { throw 'MakeAppx bundle validation failed.' }
+      - name: Sign bundle when secure credentials exist
+        if: env.GLASS_SIGNING_PFX_BASE64 != '' && env.GLASS_SIGNING_PASSWORD != ''
+        shell: pwsh
+        run: |
+          $sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Directory |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+          $signTool = Join-Path $sdk.FullName 'x64\SignTool.exe'
+          $certificate = Join-Path $env:RUNNER_TEMP 'glass-signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes($certificate,
+              [Convert]::FromBase64String($env:GLASS_SIGNING_PFX_BASE64))
+            & $signTool sign /fd SHA256 /f $certificate /p $env:GLASS_SIGNING_PASSWORD "release/Glass_${env:GLASS_VERSION}.msixbundle"
+            if ($LASTEXITCODE -ne 0) { throw 'MSIXBundle signing failed.' }
+            & $signTool verify /pa "release/Glass_${env:GLASS_VERSION}.msixbundle"
+            if ($LASTEXITCODE -ne 0) { throw 'MSIXBundle signature verification failed.' }
+          }
+          finally {
+            Remove-Item $certificate -Force -ErrorAction SilentlyContinue
+          }
+      - name: Generate App Installer metadata
+        if: env.GLASS_RELEASE_BASE_URI != '' && (github.event_name == 'push' || inputs.publish_release_metadata)
+        shell: pwsh
+        run: |
+          ./scripts/Generate-AppInstaller.ps1 `
+            -Version $env:GLASS_VERSION `
+            -ReleaseBaseUri $env:GLASS_RELEASE_BASE_URI `
+            -Publisher $env:GLASS_PUBLISHER `
+            -BundleFileName "Glass_${env:GLASS_VERSION}.msixbundle" `
+            -OutputPath release/Glass.appinstaller
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Glass-release
+          path: release/*
+          if-no-files-found: error
