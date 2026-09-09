@@ -6,12 +6,12 @@ public sealed record ClockOptions(string? TimeZoneId, bool Use24HourClock, bool 
 
 public sealed class ClockModel(TimeProvider timeProvider, ClockOptions options)
 {
-    private readonly TimeZoneInfo _timeZone = string.IsNullOrWhiteSpace(options.TimeZoneId)
-        ? TimeZoneInfo.Local
-        : TimeZoneInfo.FindSystemTimeZoneById(options.TimeZoneId);
+    private readonly TimeZoneInfo _timeZone = ResolveTimeZone(options.TimeZoneId);
 
     public DateTimeOffset Current =>
         TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), _timeZone);
+
+    public string TimeZoneDisplayName => _timeZone.DisplayName;
 
     public string FormatTime(CultureInfo culture)
     {
@@ -27,5 +27,13 @@ public sealed class ClockModel(TimeProvider timeProvider, ClockOptions options)
         var ticks = options.ShowSeconds ? TimeSpan.TicksPerSecond : TimeSpan.TicksPerMinute;
         var remaining = ticks - (now.Ticks % ticks);
         return TimeSpan.FromTicks(remaining == 0 ? ticks : remaining);
+    }
+
+    private static TimeZoneInfo ResolveTimeZone(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return TimeZoneInfo.Local;
+        try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+        catch (TimeZoneNotFoundException) { return TimeZoneInfo.Local; }
+        catch (InvalidTimeZoneException) { return TimeZoneInfo.Local; }
     }
 }

@@ -237,6 +237,56 @@ public sealed partial class ControlCenterWindow : Window
         WidgetInstances.SelectedItem = WidgetInstances.Items.OfType<ListViewItem>().FirstOrDefault(item =>
             item.Tag is WidgetInstanceDefinition instance && instance.WidgetInstanceId == selectedId) ??
             WidgetInstances.Items.OfType<ListViewItem>().FirstOrDefault();
+        PopulateWidgetSettings();
+    }
+
+    private void PopulateWidgetSettings()
+    {
+        if (WidgetSettingsPanel is null) return;
+        WidgetSettingsPanel.Children.Clear();
+        if (SelectedWidgetInstance is not { } instance)
+        {
+            WidgetSettingsPanel.Children.Add(new TextBlock
+            {
+                Text = "Select an instance to configure it.",
+                Opacity = 0.65,
+            });
+            return;
+        }
+
+        WidgetSettingsPanel.Children.Add(SettingNumber(
+            "Width", "__width", instance.Size.Width, 96, 800));
+        WidgetSettingsPanel.Children.Add(SettingNumber(
+            "Height", "__height", instance.Size.Height, 64, 800));
+        switch (instance.WidgetTypeId)
+        {
+            case "clock":
+            case "date":
+                WidgetSettingsPanel.Children.Add(SettingText(
+                    "Windows time-zone ID (blank uses local)", "timeZoneId",
+                    Value(instance, "timeZoneId")));
+                WidgetSettingsPanel.Children.Add(SettingToggle(
+                    "Use 24-hour time", "use24Hour", Value(instance, "use24Hour") != "false"));
+                WidgetSettingsPanel.Children.Add(SettingToggle(
+                    "Show seconds", "showSeconds", Value(instance, "showSeconds") == "true"));
+                break;
+            case "timer":
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Default minutes", "durationMinutes",
+                    NumberValue(instance, "durationMinutes", 5), 1, 1440));
+                break;
+            case "weather":
+                WidgetSettingsPanel.Children.Add(SettingText(
+                    "Location label", "locationLabel", Value(instance, "locationLabel")));
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Latitude", "latitude", NumberValue(instance, "latitude", double.NaN), -90, 90));
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Longitude", "longitude", NumberValue(instance, "longitude", double.NaN), -180, 180));
+                break;
+        }
+        var save = new Button { Content = "Save instance settings", MinHeight = 36 };
+        save.Click += SaveWidgetSettings_Click;
+        WidgetSettingsPanel.Children.Add(save);
     }
 
     private void LoadAppearance()
@@ -245,6 +295,8 @@ public sealed partial class ControlCenterWindow : Window
         var settings = _settings.Current.Normalize();
         var material = SelectedMaterial(settings);
         Select(ThemeMode, settings.Appearance.ThemeMode.ToString());
+        Select(AccentMode, settings.Appearance.AccentPreference.ToString());
+        AccentColor.Text = settings.Appearance.CustomAccentColor;
         TintColor.Text = material.TintColor;
         MaterialIntensity.Value = material.MaterialIntensity;
         TintStrength.Value = material.TintStrength;
@@ -253,12 +305,16 @@ public sealed partial class ControlCenterWindow : Window
         EdgeStrength.Value = material.EdgeHighlightStrength;
         ShadowStrength.Value = material.ShadowStrength;
         CornerRadius.Value = material.CornerRadius;
+        OverallOpacity.Value = material.OverallOpacity;
         BarPadding.Value = settings.Appearance.BarPadding;
         ItemSpacing.Value = settings.Appearance.ItemSpacing;
         IconSize.Value = settings.Appearance.ApplicationIconSize;
+        Select(WidgetDensity, settings.Appearance.WidgetDensity.ToString());
         Select(Magnification, settings.Appearance.Magnification.ToString());
         MaximumScale.Value = settings.Appearance.MagnificationMaximumScale;
         PopulatePresets(material.Preset);
+        ResetAppearance.Content = _editMode.Selection is null
+            ? "Reset global defaults" : "Reset to Global";
         _loading = false;
     }
 
@@ -447,6 +503,10 @@ public sealed partial class ControlCenterWindow : Window
     {
         if (!_loading) PopulateWidgets();
     }
+    private void WidgetInstances_SelectionChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (!_loading) PopulateWidgetSettings();
+    }
     private async void AddWidgetDesktop_Click(object sender, RoutedEventArgs args)
     {
         if (SelectedWidgetType is not { } metadata) return;
@@ -465,7 +525,41 @@ public sealed partial class ControlCenterWindow : Window
     private void ConfigureWidget_Click(object sender, RoutedEventArgs args)
     {
         if (SelectedWidgetInstance is { } widget)
+        {
             _editMode.Select(new EditSelection(EditableSurfaceKind.Widget, widget.WidgetInstanceId));
+            PopulateWidgetSettings();
+        }
+    }
+    private async void SaveWidgetSettings_Click(object sender, RoutedEventArgs args)
+    {
+        if (SelectedWidgetInstance is not { } instance) return;
+        var values = instance.Configuration.ToDictionary(pair => pair.Key, pair => pair.Value);
+        var width = instance.Size.Width;
+        var height = instance.Size.Height;
+        foreach (var control in WidgetSettingsPanel.Children.OfType<FrameworkElement>())
+        {
+            if (control.Tag is not string key) continue;
+            string? value = control switch
+            {
+                TextBox text => text.Text.Trim(),
+                ToggleSwitch toggle => toggle.IsOn ? "true" : "false",
+                NumberBox number when !double.IsNaN(number.Value) =>
+                    number.Value.ToString(CultureInfo.InvariantCulture),
+                _ => null,
+            };
+            if (key == "__width" && value is not null)
+                width = double.Parse(value, CultureInfo.InvariantCulture);
+            else if (key == "__height" && value is not null)
+                height = double.Parse(value, CultureInfo.InvariantCulture);
+            else if (value is null || value.Length == 0) values.Remove(key);
+            else values[key] = value;
+        }
+        await RunAsync(async () => await _shell.UpdateWidgetConfigurationAsync(instance with
+        {
+            Size = new LogicalSize(width, height),
+            Configuration = values,
+        }));
+        _syncWidgets();
     }
     private async void MoveWidget_Click(object sender, RoutedEventArgs args)
     {
@@ -504,24 +598,40 @@ public sealed partial class ControlCenterWindow : Window
     private async void Appearance_Changed(object sender, object args)
     {
         if (_loading) return;
-        if (sender == ThemeMode && Enum.TryParse<Glass.Core.Appearance.ThemeMode>(ThemeMode.SelectedItem as string, out var theme))
+        if (ReferenceEquals(sender, ThemeMode) && Enum.TryParse<Glass.Core.Appearance.ThemeMode>(ThemeMode.SelectedItem as string, out var theme))
             await _settings.UpdateAsync(current => current with
             {
                 Appearance = current.Appearance with { ThemeMode = theme },
             });
-        else if (sender == Magnification && Enum.TryParse<MagnificationMode>(Magnification.SelectedItem as string, out var magnification))
+        else if (ReferenceEquals(sender, AccentMode) && Enum.TryParse<AccentPreference>(AccentMode.SelectedItem as string, out var accent))
+            await _settings.UpdateAsync(current => current with
+            {
+                Appearance = current.Appearance with { AccentPreference = accent },
+            });
+        else if (ReferenceEquals(sender, AccentColor))
+            await _settings.UpdateAsync(current => current with
+            {
+                Appearance = current.Appearance with { CustomAccentColor = AccentColor.Text },
+            });
+        else if (ReferenceEquals(sender, Magnification) && Enum.TryParse<MagnificationMode>(Magnification.SelectedItem as string, out var magnification))
             await _settings.UpdateAsync(current => current with
             {
                 Appearance = current.Appearance with { Magnification = magnification },
             });
-        else if (sender == TintColor)
+        else if (ReferenceEquals(sender, WidgetDensity) && Enum.TryParse<WidgetSurfaceDensity>(WidgetDensity.SelectedItem as string, out var density))
+            await _settings.UpdateAsync(current => current with
+            {
+                Appearance = current.Appearance with { WidgetDensity = density },
+            });
+        else if (ReferenceEquals(sender, TintColor))
             await ApplyMaterialOverrideAsync(value => value with { TintColor = TintColor.Text },
                 value => value with { TintColor = TintColor.Text });
     }
     private async void AppearanceSlider_Changed(object sender, RangeBaseValueChangedEventArgs args)
     {
         if (_loading) return;
-        if (sender == BarPadding || sender == ItemSpacing || sender == IconSize || sender == MaximumScale)
+        if (ReferenceEquals(sender, BarPadding) || ReferenceEquals(sender, ItemSpacing) ||
+            ReferenceEquals(sender, IconSize) || ReferenceEquals(sender, MaximumScale))
         {
             await _settings.UpdateAsync(current => current with
             {
@@ -537,23 +647,25 @@ public sealed partial class ControlCenterWindow : Window
         }
         await ApplyMaterialOverrideAsync(material => sender switch
         {
-            Slider value when value == MaterialIntensity => material with { MaterialIntensity = value.Value },
-            Slider value when value == TintStrength => material with { TintStrength = value.Value },
-            Slider value when value == Luminosity => material with { Luminosity = value.Value },
-            Slider value when value == BorderStrength => material with { BorderStrength = value.Value },
-            Slider value when value == EdgeStrength => material with { EdgeHighlightStrength = value.Value },
-            Slider value when value == ShadowStrength => material with { ShadowStrength = value.Value },
-            Slider value when value == CornerRadius => material with { CornerRadius = value.Value },
+            Slider value when ReferenceEquals(value, MaterialIntensity) => material with { MaterialIntensity = value.Value },
+            Slider value when ReferenceEquals(value, TintStrength) => material with { TintStrength = value.Value },
+            Slider value when ReferenceEquals(value, Luminosity) => material with { Luminosity = value.Value },
+            Slider value when ReferenceEquals(value, BorderStrength) => material with { BorderStrength = value.Value },
+            Slider value when ReferenceEquals(value, EdgeStrength) => material with { EdgeHighlightStrength = value.Value },
+            Slider value when ReferenceEquals(value, ShadowStrength) => material with { ShadowStrength = value.Value },
+            Slider value when ReferenceEquals(value, CornerRadius) => material with { CornerRadius = value.Value },
+            Slider value when ReferenceEquals(value, OverallOpacity) => material with { OverallOpacity = value.Value },
             _ => material,
         }, value => sender switch
         {
-            Slider slider when slider == MaterialIntensity => value with { MaterialIntensity = slider.Value },
-            Slider slider when slider == TintStrength => value with { TintStrength = slider.Value },
-            Slider slider when slider == Luminosity => value with { Luminosity = slider.Value },
-            Slider slider when slider == BorderStrength => value with { BorderStrength = slider.Value },
-            Slider slider when slider == EdgeStrength => value with { EdgeHighlightStrength = slider.Value },
-            Slider slider when slider == ShadowStrength => value with { ShadowStrength = slider.Value },
-            Slider slider when slider == CornerRadius => value with { CornerRadius = slider.Value },
+            Slider slider when ReferenceEquals(slider, MaterialIntensity) => value with { MaterialIntensity = slider.Value },
+            Slider slider when ReferenceEquals(slider, TintStrength) => value with { TintStrength = slider.Value },
+            Slider slider when ReferenceEquals(slider, Luminosity) => value with { Luminosity = slider.Value },
+            Slider slider when ReferenceEquals(slider, BorderStrength) => value with { BorderStrength = slider.Value },
+            Slider slider when ReferenceEquals(slider, EdgeStrength) => value with { EdgeHighlightStrength = slider.Value },
+            Slider slider when ReferenceEquals(slider, ShadowStrength) => value with { ShadowStrength = slider.Value },
+            Slider slider when ReferenceEquals(slider, CornerRadius) => value with { CornerRadius = slider.Value },
+            Slider slider when ReferenceEquals(slider, OverallOpacity) => value with { OverallOpacity = slider.Value },
             _ => value,
         });
     }
@@ -638,6 +750,19 @@ public sealed partial class ControlCenterWindow : Window
             CustomPresets = [.. current.CustomPresets,
                 new AppearancePresetDefinition(Guid.NewGuid(), name,
                     preset.Material with { Preset = MaterialPreset.Custom }, false)],
+        });
+    }
+    private async void RenamePreset_Click(object sender, RoutedEventArgs args)
+    {
+        if ((PresetSelector.SelectedItem as ComboBoxItem)?.Tag is not
+            AppearancePresetDefinition { IsBuiltIn: false } preset) return;
+        var name = await RequestNameAsync("Rename preset", preset.Name);
+        if (name is null) return;
+        await _settings.UpdateAsync(current => current with
+        {
+            CustomPresets = current.CustomPresets
+                .Select(item => item.PresetId == preset.PresetId ? item with { Name = name } : item)
+                .ToArray(),
         });
     }
     private async void DeletePreset_Click(object sender, RoutedEventArgs args)
@@ -751,6 +876,40 @@ public sealed partial class ControlCenterWindow : Window
         Guid.NewGuid(), metadata.TypeId.Value,
         new LogicalSize(metadata.SizeConstraints.Default.Width, metadata.SizeConstraints.Default.Height),
         new Dictionary<string, string>());
+
+    private static TextBox SettingText(string header, string key, string value) => new()
+    {
+        Header = header,
+        Text = value,
+        Tag = key,
+    };
+
+    private static NumberBox SettingNumber(
+        string header, string key, double value, double minimum, double maximum) => new()
+    {
+        Header = header,
+        Value = value,
+        Minimum = minimum,
+        Maximum = maximum,
+        Tag = key,
+    };
+
+    private static ToggleSwitch SettingToggle(
+        string header, string key, bool value) => new()
+    {
+        Header = header,
+        IsOn = value,
+        Tag = key,
+    };
+
+    private static string Value(WidgetInstanceDefinition instance, string key) =>
+        instance.Configuration.GetValueOrDefault(key) ?? string.Empty;
+
+    private static double NumberValue(
+        WidgetInstanceDefinition instance, string key, double fallback) =>
+        instance.Configuration.TryGetValue(key, out var value) &&
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed : fallback;
 
     private string HostDescription(Guid id)
     {

@@ -93,7 +93,7 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
         _widgetRuntime = new WidgetRuntime(widgetRegistry);
         var widgetViews = new BuiltInWidgetViewFactory(new WidgetViewServices(
             _media, _metrics, _power, _audio, launcher, _icons, _weather,
-            new OneShotLocationService()));
+            new OneShotLocationService(), () => _settings.Current.Appearance));
         var editMode = new Glass.Core.Editing.EditModeSession();
 
         ShellRuntime? shellReference = null;
@@ -242,7 +242,8 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
                 widget => new WidgetInstanceId(widget.WidgetInstanceId));
             foreach (var existing in _widgetRuntime.Instances.ToArray())
             {
-                if (!desired.ContainsKey(existing.Configuration.InstanceId))
+                if (!desired.TryGetValue(existing.Configuration.InstanceId, out var definition) ||
+                    !ConfigurationMatches(existing.Configuration, definition))
                     await _widgetRuntime.RemoveAsync(existing.Configuration.InstanceId);
             }
             foreach (var pair in desired)
@@ -258,6 +259,16 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
         }
         finally { _widgetSyncGate.Release(); }
     }
+
+    private static bool ConfigurationMatches(
+        WidgetInstanceConfiguration runtime,
+        WidgetInstanceDefinition definition) =>
+        runtime.TypeId.Value == definition.WidgetTypeId &&
+        runtime.Size.Width == definition.Size.Width &&
+        runtime.Size.Height == definition.Size.Height &&
+        runtime.Settings.Count == definition.Configuration.Count &&
+        runtime.Settings.All(pair =>
+            definition.Configuration.TryGetValue(pair.Key, out var value) && value == pair.Value);
 
     private void OnSettingsChanged(object? sender, EventArgs args)
     {

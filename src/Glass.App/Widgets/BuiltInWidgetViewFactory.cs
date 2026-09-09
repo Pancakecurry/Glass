@@ -9,6 +9,7 @@ using Glass.Widgets.BuiltIn.Weather;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.Streams;
@@ -47,6 +48,13 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         AutomationProperties.SetName(content,
             BuiltInWidgetCatalog.All.First(item => item.TypeId == instance.Configuration.TypeId)
                 .DisplayName);
+        if (content is StackPanel panel)
+            panel.Padding = new Thickness(services.Appearance().WidgetDensity switch
+            {
+                Glass.Core.Appearance.WidgetSurfaceDensity.Compact => 8,
+                Glass.Core.Appearance.WidgetSurfaceDensity.Spacious => 16,
+                _ => 12,
+            });
         return content;
     }
 
@@ -118,7 +126,7 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
     {
         var panel = Panel(mode == WidgetViewMode.Compact ? string.Empty : "Clock");
         var time = Display(string.Empty);
-        var zone = Caption(TimeZoneInfo.Local.DisplayName);
+        var zone = Caption(instance.Model.TimeZoneDisplayName);
         panel.Children.Add(time);
         if (mode != WidgetViewMode.Compact) panel.Children.Add(zone);
         void Refresh() => time.Text = instance.Model.FormatTime(CultureInfo.CurrentCulture);
@@ -329,7 +337,13 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
     {
         var panel = Panel("Timer");
         var remaining = Display("05:00");
-        var duration = new NumberBox { Header = "Minutes", Value = 5, Minimum = 1, Maximum = 1440 };
+        var duration = new NumberBox
+        {
+            Header = "Minutes",
+            Value = ReadNumber(instance.Configuration.Settings, "durationMinutes", 5),
+            Minimum = 1,
+            Maximum = 1440,
+        };
         var controls = Actions(
             TextAction("Start", () => instance.Start(TimeSpan.FromMinutes(duration.Value))),
             TextAction("Pause", instance.Pause), TextAction("Resume", instance.Resume),
@@ -354,7 +368,8 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         {
             elapsed.Text = FormatTime(instance.Stopwatch.Elapsed, tenths: true);
             laps.Text = instance.Stopwatch.State.Laps.Count == 0 ? "No laps" :
-                string.Join("  ", instance.Stopwatch.State.Laps.TakeLast(4).Select(FormatTime));
+                string.Join("  ", instance.Stopwatch.State.Laps.TakeLast(4)
+                    .Select(value => FormatTime(value)));
         });
     }
 
@@ -499,9 +514,23 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
     {
         var panel = Panel("Weather");
         var location = new TextBox { Header = "Location", Text = configuration.Settings.GetValueOrDefault("locationLabel") ?? "Current location" };
-        var latitude = new NumberBox { Header = "Latitude", Minimum = -90, Maximum = 90 };
-        var longitude = new NumberBox { Header = "Longitude", Minimum = -180, Maximum = 180 };
+        var latitude = new NumberBox
+        {
+            Header = "Latitude",
+            Value = ReadNumber(configuration.Settings, "latitude", double.NaN),
+            Minimum = -90,
+            Maximum = 90,
+        };
+        var longitude = new NumberBox
+        {
+            Header = "Longitude",
+            Value = ReadNumber(configuration.Settings, "longitude", double.NaN),
+            Minimum = -180,
+            Maximum = 180,
+        };
         var conditions = Display("Configure a location");
+        var range = Value(string.Empty);
+        var forecast = Caption(string.Empty);
         var detail = Caption("Weather data: MET Norway (CC BY 4.0)");
         var load = new Button { Content = "Update", MinHeight = 36 };
         var device = new Button { Content = "Use device location", MinHeight = 36 };
@@ -524,10 +553,16 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
             var snapshot = await services.Weather.GetAsync(new WeatherLocation(
                 latitude.Value, longitude.Value, location.Text));
             conditions.Text = snapshot is null ? "Weather unavailable" : $"{snapshot.AirTemperatureCelsius:0} °C";
+            range.Text = snapshot is { HighTemperatureCelsius: { } high, LowTemperatureCelsius: { } low }
+                ? $"High {high:0}° · Low {low:0}°" : string.Empty;
+            forecast.Text = snapshot is null ? string.Empty : string.Join("   ", snapshot.Forecast.Select(point =>
+                $"{point.At:HH:mm}  {point.AirTemperatureCelsius:0}°  {point.SymbolCode.Replace('_', ' ')}"));
             detail.Text = snapshot is null ? "Check the connection or location" :
                 $"{snapshot.SymbolCode.Replace('_', ' ')}{(snapshot.IsStale ? " · cached" : string.Empty)} · {snapshot.Attribution}";
         }
         panel.Children.Add(conditions);
+        panel.Children.Add(range);
+        panel.Children.Add(forecast);
         panel.Children.Add(detail);
         panel.Children.Add(location);
         panel.Children.Add(Actions(latitude, longitude));
@@ -647,6 +682,14 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         >= 1_000 => $"{bytes / 1_000d:0.0} KB/s",
         _ => $"{bytes} B/s",
     };
+
+    private static double ReadNumber(
+        IReadOnlyDictionary<string, string> settings,
+        string key,
+        double fallback) =>
+        settings.TryGetValue(key, out var value) &&
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? parsed : fallback;
     private static async Task SetImageAsync(Image image, byte[] data)
     {
         using var stream = new InMemoryRandomAccessStream();

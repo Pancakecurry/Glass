@@ -136,13 +136,16 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="8">
                                         <TextBlock Text="Existing instances" Style="{StaticResource GlassSectionTitleStyle}" />
-                                        <ListView x:Name="WidgetInstances" MinHeight="300" />
+                                        <ListView x:Name="WidgetInstances" MinHeight="220"
+                                                  SelectionChanged="WidgetInstances_SelectionChanged" />
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <Button Content="Configure" Click="ConfigureWidget_Click" />
                                             <Button Content="Move" Click="MoveWidget_Click" />
                                             <Button Content="Duplicate" Click="DuplicateWidget_Click" />
                                             <Button Content="Remove" Click="RemoveWidget_Click" />
                                         </StackPanel>
+                                        <TextBlock Text="Instance settings" Style="{StaticResource GlassSectionTitleStyle}" />
+                                        <StackPanel x:Name="WidgetSettingsPanel" Spacing="8" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -154,6 +157,11 @@
                                 <ComboBox x:Name="ThemeMode" Header="Theme" SelectionChanged="Appearance_Changed">
                                     <x:String>System</x:String><x:String>Light</x:String><x:String>Dark</x:String>
                                 </ComboBox>
+                                <ComboBox x:Name="AccentMode" Header="Accent" SelectionChanged="Appearance_Changed">
+                                    <x:String>System</x:String><x:String>Custom</x:String>
+                                </ComboBox>
+                                <TextBox x:Name="AccentColor" Header="Custom accent (#RRGGBB)"
+                                         TextChanged="Appearance_Changed" />
                                 <ComboBox x:Name="PresetSelector" Header="Material preset" MinWidth="240"
                                           SelectionChanged="PresetSelector_SelectionChanged" />
                                 <Expander Header="Advanced Material">
@@ -166,21 +174,26 @@
                                         <Slider x:Name="EdgeStrength" Header="Edge light" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
                                         <Slider x:Name="ShadowStrength" Header="Shadow" Minimum="0" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
                                         <Slider x:Name="CornerRadius" Header="Corner radius" Minimum="0" Maximum="40" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                        <Slider x:Name="OverallOpacity" Header="Overall opacity" Minimum="0.45" Maximum="1" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
                                     </StackPanel>
                                 </Expander>
                                 <TextBlock Text="Layout density" Style="{StaticResource GlassSectionTitleStyle}" />
                                 <Slider x:Name="BarPadding" Header="Bar padding" Minimum="2" Maximum="24" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
                                 <Slider x:Name="ItemSpacing" Header="Item spacing" Minimum="0" Maximum="20" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
                                 <Slider x:Name="IconSize" Header="Application icon size" Minimum="20" Maximum="48" StepFrequency="1" ValueChanged="AppearanceSlider_Changed" />
+                                <ComboBox x:Name="WidgetDensity" Header="Widget surface density" SelectionChanged="Appearance_Changed">
+                                    <x:String>Compact</x:String><x:String>Comfortable</x:String><x:String>Spacious</x:String>
+                                </ComboBox>
                                 <ComboBox x:Name="Magnification" Header="Magnification" SelectionChanged="Appearance_Changed">
                                     <x:String>Off</x:String><x:String>Subtle</x:String><x:String>Expressive</x:String><x:String>Custom</x:String>
                                 </ComboBox>
                                 <Slider x:Name="MaximumScale" Header="Maximum scale" Minimum="1" Maximum="1.35" StepFrequency="0.01" ValueChanged="AppearanceSlider_Changed" />
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <Button Content="Save as custom preset" Click="SavePreset_Click" />
+                                    <Button Content="Rename custom preset" Click="RenamePreset_Click" />
                                     <Button Content="Duplicate preset" Click="DuplicatePreset_Click" />
                                     <Button Content="Delete custom preset" Click="DeletePreset_Click" />
-                                    <Button Content="Reset to default" Click="ResetAppearance_Click" />
+                                    <Button x:Name="ResetAppearance" Content="Reset global defaults" Click="ResetAppearance_Click" />
                                 </StackPanel>
                             </StackPanel>
 

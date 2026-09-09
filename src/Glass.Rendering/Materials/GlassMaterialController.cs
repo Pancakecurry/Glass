@@ -45,7 +45,7 @@ public sealed class GlassMaterialController
             window.SystemBackdrop = null;
         }
 
-        var tint = ParseColor(settings.TintColor);
+        var tint = AdjustLuminosity(ParseColor(settings.TintColor), settings.Luminosity);
         var overlayAlpha = solid
             ? byte.MaxValue
             : Alpha(Math.Clamp(
@@ -80,5 +80,17 @@ public sealed class GlassMaterialController
             Convert.ToByte(normalized[0..2], 16),
             Convert.ToByte(normalized[2..4], 16),
             Convert.ToByte(normalized[4..6], 16));
+    }
+
+    private static Color AdjustLuminosity(Color color, double luminosity)
+    {
+        var target = luminosity >= 0.5 ? byte.MaxValue : byte.MinValue;
+        var amount = Math.Abs(luminosity - 0.5) * 0.72;
+        static byte Blend(byte source, byte target, double amount) =>
+            (byte)Math.Round(source + ((target - source) * amount));
+        return Color.FromArgb(color.A,
+            Blend(color.R, target, amount),
+            Blend(color.G, target, amount),
+            Blend(color.B, target, amount));
     }
 }

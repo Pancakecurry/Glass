@@ -22,6 +22,8 @@ public sealed class WeatherProviderTests
         Assert.Equal(first, second);
         Assert.Equal(1, handler.Requests);
         Assert.Contains("MET Norway", first!.Attribution);
+        Assert.Equal(4.5, first.HighTemperatureCelsius);
+        Assert.Equal(4.5, first.LowTemperatureCelsius);
     }
 
     private sealed class StubHandler : HttpMessageHandler

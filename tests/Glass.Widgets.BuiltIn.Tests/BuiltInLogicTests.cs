@@ -38,6 +38,15 @@ public sealed class BuiltInLogicTests
         Assert.Equal(PomodoroPhase.ShortBreak, pomodoro.Phase);
     }
 
+    [Fact]
+    public void ClockFallsBackToLocalForUnknownTimeZone()
+    {
+        var clock = new ClockModel(TimeProvider.System,
+            new ClockOptions("not-a-real-time-zone", true, false));
+
+        Assert.Equal(TimeZoneInfo.Local.DisplayName, clock.TimeZoneDisplayName);
+    }
+
     private sealed class MutableTimeProvider(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;

@@ -1,3 +1,4 @@
+using Glass.Core.Appearance;
 using Glass.Platform.Windows.Applications;
 using Glass.Platform.Windows.Audio;
 using Glass.Platform.Windows.Location;
@@ -15,4 +16,5 @@ internal sealed record WidgetViewServices(
     ApplicationLaunchService Launcher,
     ShellIconService Icons,
     IWeatherProvider Weather,
-    OneShotLocationService Location);
+    OneShotLocationService Location,
+    Func<GlobalAppearanceSettings> Appearance);

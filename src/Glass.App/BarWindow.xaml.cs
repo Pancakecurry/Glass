@@ -9,6 +9,7 @@ using Glass.Platform.Windows.Displays;
 using Glass.Platform.Windows.Windowing;
 using Glass.Shell.Surfaces;
 using Glass.Widgets.Abstractions;
+using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -74,11 +75,13 @@ public sealed partial class BarWindow : Window, IBarSurface
     public void Apply(BarDefinition definition)
     {
         definition = definition.Normalize();
+        EditLabel.Text = $"{definition.Name} · Bar";
         _autoHide.SetEnabled(definition.AutoHideEnabled);
         _surfaceController.Apply(definition);
         ApplyOrientation(definition.Orientation);
         ApplyAppearance();
         RenderContent();
+        SetHostedWidgetsVisible(IsVisible && _autoHide.State != AutoHideState.Hidden);
     }
 
     public ValueTask<BarDefinition> ReconcileDisplayAsync()
@@ -228,7 +231,9 @@ public sealed partial class BarWindow : Window, IBarSurface
         RunningApplicationGroup? group,
         bool isPinned)
     {
-        var settings = _services.Settings().Appearance.Normalize();
+        var productSettings = _services.Settings().Normalize();
+        var settings = productSettings.Appearance;
+        var taskbar = productSettings.Taskbar;
         var displayName = _services.Applications.Current
             .FirstOrDefault(application => application.Identity == identity)?.DisplayName ??
             group?.DisplayName ?? Path.GetFileNameWithoutExtension(identity.Value);
@@ -243,10 +248,11 @@ public sealed partial class BarWindow : Window, IBarSurface
             Height = group?.IsActive == true ? 3 : 2,
             Width = group is null ? 0 : group.Windows.Count > 1 ? 14 : 6,
             CornerRadius = new CornerRadius(2),
-            Background = new SolidColorBrush(group?.IsActive == true
-                ? Color.FromArgb(255, 86, 156, 255)
-                : Color.FromArgb(180, 150, 160, 172)),
+            Background = group?.IsActive == true
+                ? ResolveAccentBrush(settings)
+                : new SolidColorBrush(Color.FromArgb(180, 150, 160, 172)),
             HorizontalAlignment = HorizontalAlignment.Center,
+            Visibility = taskbar.ShowRunningIndicators ? Visibility.Visible : Visibility.Collapsed,
         };
         var item = new StackPanel { Spacing = 2 };
         item.Children.Add(iconHost);
@@ -261,7 +267,7 @@ public sealed partial class BarWindow : Window, IBarSurface
             Background = new SolidColorBrush(Colors.Transparent),
         };
         AutomationProperties.SetName(button, BuildAccessibleName(displayName, group, isPinned));
-        ToolTipService.SetToolTip(button, displayName);
+        if (taskbar.ShowTooltips) ToolTipService.SetToolTip(button, displayName);
         button.Click += (_, _) => Activate(identity, group, button);
         button.ContextFlyout = ApplicationMenu(identity, group, isPinned);
         button.PointerEntered += (_, _) =>
@@ -395,10 +401,12 @@ public sealed partial class BarWindow : Window, IBarSurface
         RunningApplicationGroup? group,
         Button? anchor)
     {
+        var preferences = _services.Settings().Taskbar;
         if (group is null) _launcher.Launch(identity);
-        else if (group.Windows.Count == 1) _launcher.ActivateOrToggle(group.Windows[0]);
+        else if (group.Windows.Count == 1 && preferences.ActivateSingleWindowDirectly)
+            _launcher.ActivateOrToggle(group.Windows[0], preferences.ToggleForegroundWindowMinimize);
         else if (anchor is not null) ShowWindowChooser(anchor, group);
-        else _launcher.ActivateOrToggle(group.Windows[0]);
+        else _launcher.ActivateOrToggle(group.Windows[0], preferences.ToggleForegroundWindowMinimize);
     }
 
     private void ShowWindowChooser(Button button, RunningApplicationGroup group)
@@ -409,9 +417,10 @@ public sealed partial class BarWindow : Window, IBarSurface
             var item = new MenuFlyoutItem
             {
                 Text = string.IsNullOrWhiteSpace(window.Title) ? group.DisplayName : window.Title,
-                Icon = window.IsForeground ? new FontIconSource { Glyph = "\uE73E" } : null,
+                Icon = window.IsForeground ? new FontIcon { Glyph = "\uE73E" } : null,
             };
-            item.Click += (_, _) => _launcher.ActivateOrToggle(window);
+            item.Click += (_, _) => _launcher.ActivateOrToggle(window,
+                _services.Settings().Taskbar.ToggleForegroundWindowMinimize);
             flyout.Items.Add(item);
         }
         flyout.ShowAt(button);
@@ -494,8 +503,11 @@ public sealed partial class BarWindow : Window, IBarSurface
                 hidden ? 0.18f : 1);
         });
 
-    private void OnDefinitionSettled(object? sender, BarDefinitionChangedEventArgs args) =>
+    private void OnDefinitionSettled(object? sender, BarDefinitionChangedEventArgs args)
+    {
+        _services.Motion.AnimateScale(SurfaceChrome, MotionIntent.Snap, 1);
         DefinitionSettled?.Invoke(this, args);
+    }
 
     private void OnRunningWindowsChanged(object? sender, EventArgs args) =>
         DispatcherQueue.TryEnqueue(RenderContent);
@@ -506,6 +518,8 @@ public sealed partial class BarWindow : Window, IBarSurface
             var selected = _services.EditMode.Selection is
                 { Kind: EditableSurfaceKind.Bar } selection && selection.Id == Id.Value;
             EditOutline.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            EditLabelContainer.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            EditResizeHandle.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             DragRegion.Opacity = _services.EditMode.IsActive ? 0.8 : 0.35;
             _services.Motion.AnimateScale(SurfaceChrome, MotionIntent.SurfaceLift,
                 selected ? 1.015 : 1);
@@ -548,5 +562,26 @@ public sealed partial class BarWindow : Window, IBarSurface
         if (group?.IsActive == true) states.Add("active");
         if (group?.Windows.Count > 1) states.Add($"{group.Windows.Count} windows");
         return states.Count == 0 ? displayName : $"{displayName}, {string.Join(", ", states)}";
+    }
+
+    private static Brush ResolveAccentBrush(GlobalAppearanceSettings settings)
+    {
+        if (settings.AccentPreference == AccentPreference.System)
+        {
+            try
+            {
+                if (Application.Current.Resources["AccentFillColorDefaultBrush"] is Brush accent)
+                    return accent;
+            }
+            catch (KeyNotFoundException) { }
+        }
+        var value = settings.CustomAccentColor.TrimStart('#');
+        var color = value.Length == 6
+            ? Color.FromArgb(255,
+                Convert.ToByte(value[0..2], 16),
+                Convert.ToByte(value[2..4], 16),
+                Convert.ToByte(value[4..6], 16))
+            : Color.FromArgb(255, 86, 156, 255);
+        return new SolidColorBrush(color);
     }
 }

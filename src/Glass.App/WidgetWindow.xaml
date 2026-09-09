@@ -20,5 +20,9 @@
             <TextBlock x:Name="EditLabel"
                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
         </Border>
+        <Border x:Name="EditResizeHandle" Width="14" Height="14"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,7,7"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                BorderThickness="0,0,3,3" IsHitTestVisible="False" Visibility="Collapsed" />
     </Grid>
 </Window>

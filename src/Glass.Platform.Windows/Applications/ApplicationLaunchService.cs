@@ -27,9 +27,11 @@ public sealed partial class ApplicationLaunchService
             throw new InvalidOperationException($"Windows could not launch '{target}'.");
     }
 
-    public void ActivateOrToggle(RunningApplicationWindow window)
+    public void ActivateOrToggle(
+        RunningApplicationWindow window,
+        bool minimizeForegroundWindow = true)
     {
-        if (window.IsForeground)
+        if (window.IsForeground && minimizeForegroundWindow)
         {
             _ = ShowWindow(window.NativeWindow, 6);
             return;

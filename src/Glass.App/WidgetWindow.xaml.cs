@@ -23,6 +23,7 @@ public sealed partial class WidgetWindow : Window, IDisposable
     private readonly IDisposable _moveRegistration;
     private readonly IDisposable _dpiRegistration;
     private bool _disposed;
+    private bool _presented;
 
     internal WidgetWindow(
         WindowsDisplayService displays,
@@ -68,12 +69,18 @@ public sealed partial class WidgetWindow : Window, IDisposable
         ApplyPlacement(surface.Placement, instance.Size);
         if (_services.WidgetRuntime.TryGet(
             new WidgetInstanceId(instance.WidgetInstanceId), out var runtime) && runtime is not null)
+        {
             WidgetContent.Content = _services.WidgetViews.Create(runtime, _native.Hwnd);
+            if (_presented)
+                _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
+                    new WidgetInstanceId(instance.WidgetInstanceId), true));
+        }
         OnEditModeChanged(this, EventArgs.Empty);
     }
 
     public void Present()
     {
+        _presented = true;
         _native.AppWindow.Show(false);
         _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
             new WidgetInstanceId(Instance.WidgetInstanceId), true));
@@ -248,6 +255,7 @@ public sealed partial class WidgetWindow : Window, IDisposable
                 selection.Id == Instance.WidgetInstanceId;
             EditOutline.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             EditLabelContainer.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            EditResizeHandle.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             ApplyLockState();
             _services.Motion.AnimateScale(SurfaceChrome,
                 Glass.Core.Appearance.MotionIntent.SurfaceLift, selected ? 1.015 : 1);

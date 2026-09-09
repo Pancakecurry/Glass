@@ -14,7 +14,17 @@ public sealed record WeatherSnapshot(
     double? WindSpeedMetersPerSecond,
     string SymbolCode,
     bool IsStale,
-    string Attribution = "Weather data: MET Norway (CC BY 4.0)");
+    string Attribution = "Weather data: MET Norway (CC BY 4.0)")
+{
+    public double? HighTemperatureCelsius { get; init; }
+    public double? LowTemperatureCelsius { get; init; }
+    public IReadOnlyList<WeatherForecastPoint> Forecast { get; init; } = [];
+}
+
+public sealed record WeatherForecastPoint(
+    DateTimeOffset At,
+    double AirTemperatureCelsius,
+    string SymbolCode);
 
 public interface IWeatherProvider
 {
@@ -113,16 +123,56 @@ public sealed class MetNorwayWeatherProvider : IWeatherProvider, IDisposable
     {
         using var json = await JsonDocument.ParseAsync(body, cancellationToken: token)
             .ConfigureAwait(false);
-        var instant = json.RootElement.GetProperty("properties").GetProperty("timeseries")[0];
+        var timeseries = json.RootElement.GetProperty("properties").GetProperty("timeseries");
+        var instant = timeseries[0];
         var details = instant.GetProperty("data").GetProperty("instant").GetProperty("details");
         var symbol = string.Empty;
         if (instant.GetProperty("data").TryGetProperty("next_1_hours", out var next))
             symbol = next.GetProperty("summary").GetProperty("symbol_code").GetString() ?? string.Empty;
+        var observedAt = instant.GetProperty("time").GetDateTimeOffset();
+        var temperatures = timeseries.EnumerateArray()
+            .Where(item => item.GetProperty("time").GetDateTimeOffset() <= observedAt.AddHours(24))
+            .Select(ReadTemperature)
+            .Where(value => value.HasValue)
+            .Select(value => value!.Value)
+            .ToArray();
+        var forecast = timeseries.EnumerateArray()
+            .Skip(1)
+            .Where((_, index) => index % 3 == 0)
+            .Take(4)
+            .Select(item => new WeatherForecastPoint(
+                item.GetProperty("time").GetDateTimeOffset(),
+                ReadTemperature(item) ?? details.GetProperty("air_temperature").GetDouble(),
+                ReadSymbol(item)))
+            .ToArray();
         return new WeatherSnapshot(location,
-            instant.GetProperty("time").GetDateTimeOffset(),
+            observedAt,
             details.GetProperty("air_temperature").GetDouble(),
             details.TryGetProperty("wind_speed", out var wind) ? wind.GetDouble() : null,
-            symbol, false);
+            symbol, false)
+        {
+            HighTemperatureCelsius = temperatures.Length == 0 ? null : temperatures.Max(),
+            LowTemperatureCelsius = temperatures.Length == 0 ? null : temperatures.Min(),
+            Forecast = forecast,
+        };
+    }
+
+    private static double? ReadTemperature(JsonElement item)
+    {
+        var details = item.GetProperty("data").GetProperty("instant").GetProperty("details");
+        return details.TryGetProperty("air_temperature", out var temperature)
+            ? temperature.GetDouble() : null;
+    }
+
+    private static string ReadSymbol(JsonElement item)
+    {
+        var data = item.GetProperty("data");
+        foreach (var period in new[] { "next_1_hours", "next_6_hours", "next_12_hours" })
+            if (data.TryGetProperty(period, out var next) &&
+                next.TryGetProperty("summary", out var summary) &&
+                summary.TryGetProperty("symbol_code", out var symbol))
+                return symbol.GetString() ?? string.Empty;
+        return string.Empty;
     }
 
     private static void Validate(WeatherLocation location)
