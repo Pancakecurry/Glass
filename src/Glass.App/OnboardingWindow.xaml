@@ -1,0 +1,57 @@
+<Window
+    x:Class="Glass.App.OnboardingWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border x:Name="SurfaceChrome" Padding="36" CornerRadius="20">
+        <Grid Width="620" MinHeight="420">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <StackPanel x:Name="WelcomeStep" Spacing="16">
+                <TextBlock Text="Welcome to Glass" Style="{StaticResource GlassTitleTextStyle}" />
+                <TextBlock Text="A native, private taskbar and widget environment for your desktop."
+                           TextWrapping="Wrap" Style="{StaticResource GlassCaptionStyle}" />
+                <TextBlock Text="Glass works locally without an account. Weather uses the network only after you configure it."
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel x:Name="AppearanceStep" Spacing="14" Visibility="Collapsed">
+                <TextBlock Text="Choose a starting appearance" Style="{StaticResource GlassTitleTextStyle}" />
+                <ComboBox x:Name="Preset" Header="Material preset" SelectedIndex="0">
+                    <x:String>Glass Clear</x:String><x:String>Glass Frost</x:String>
+                    <x:String>Glass Smoke</x:String><x:String>Glass Crystal</x:String>
+                    <x:String>Minimal Solid</x:String>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel x:Name="BarStep" Spacing="14" Visibility="Collapsed">
+                <TextBlock Text="Set up your first bar" Style="{StaticResource GlassTitleTextStyle}" />
+                <ComboBox x:Name="BarEdge" Header="Position" SelectedIndex="1">
+                    <x:String>Top</x:String><x:String>Bottom</x:String>
+                    <x:String>Left</x:String><x:String>Right</x:String>
+                </ComboBox>
+                <ComboBox x:Name="BarStyle" Header="Style" SelectedIndex="0">
+                    <x:String>Unified</x:String><x:String>Segmented</x:String><x:String>Minimal</x:String>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel x:Name="StartupStep" Spacing="14" Visibility="Collapsed">
+                <TextBlock Text="Start Glass with Windows" Style="{StaticResource GlassTitleTextStyle}" />
+                <ToggleSwitch x:Name="StartWithWindows" Header="Start quietly when I sign in" />
+                <TextBlock x:Name="StartupAvailability" TextWrapping="Wrap"
+                           Style="{StaticResource GlassCaptionStyle}" />
+            </StackPanel>
+            <StackPanel x:Name="DoneStep" Spacing="16" Visibility="Collapsed">
+                <TextBlock Text="Your desktop is ready" Style="{StaticResource GlassTitleTextStyle}" />
+                <TextBlock Text="Open Control Center whenever you want to add widgets, edit bars, or change appearance."
+                           TextWrapping="Wrap" />
+            </StackPanel>
+            <Grid Grid.Row="1" Margin="0,28,0,0">
+                <Button x:Name="SkipButton" Content="Use Defaults" Click="Skip_Click"
+                        HorizontalAlignment="Left" />
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button x:Name="BackButton" Content="Back" Click="Back_Click" IsEnabled="False" />
+                    <Button x:Name="NextButton" Content="Continue" Click="Next_Click" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

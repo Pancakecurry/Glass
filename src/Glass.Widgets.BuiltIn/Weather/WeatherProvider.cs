@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Glass.Core.Persistence;
+using Glass.Core.Product;
 
 namespace Glass.Widgets.BuiltIn.Weather;
 
@@ -50,7 +51,7 @@ public sealed class MetNorwayWeatherProvider : IWeatherProvider, IDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
         if (_client.DefaultRequestHeaders.UserAgent.Count == 0)
             _client.DefaultRequestHeaders.UserAgent.ParseAdd(
-                "Glass/0.2 (+https://github.com/Pancakecurry/Glass)");
+                $"Glass/{ProductVersion.Current.Informational} (+https://github.com/Pancakecurry/Glass)");
     }
 
     public async ValueTask<WeatherSnapshot?> GetAsync(

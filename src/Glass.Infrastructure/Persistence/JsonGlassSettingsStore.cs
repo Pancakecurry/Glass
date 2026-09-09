@@ -9,7 +9,7 @@ namespace Glass.Infrastructure.Persistence;
 
 public sealed class JsonGlassSettingsStore : IGlassSettingsStore
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
     private const string StateKey = "settings";
     private readonly AtomicJsonStateStore _stateStore;
     private readonly LocalDiagnosticLog? _diagnostics;
@@ -48,7 +48,7 @@ public sealed class JsonGlassSettingsStore : IGlassSettingsStore
                     .ConfigureAwait(false);
             }
 
-            // Schema 0 contained the same global fields and no override collections.
+            // Earlier schemas omit behavior fields; record defaults provide migration.
             return (payload.Deserialize<GlassSettings>(_options) ?? fallback).Normalize();
         }
         catch (JsonException exception)

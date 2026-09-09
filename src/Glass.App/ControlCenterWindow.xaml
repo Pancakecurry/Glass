@@ -213,15 +213,29 @@
                                 <ToggleSwitch x:Name="ToggleMinimize" Header="Minimize the foreground app when selected again" Toggled="Behavior_Changed" />
                                 <ToggleSwitch x:Name="RunningIndicators" Header="Show running indicators" Toggled="Behavior_Changed" />
                                 <ToggleSwitch x:Name="ShowTooltips" Header="Show application tooltips" Toggled="Behavior_Changed" />
+                                <ToggleSwitch x:Name="RespectFullscreen" Header="Respect fullscreen applications" Toggled="Behavior_Changed" />
                             </StackPanel>
 
                             <StackPanel x:Name="AdvancedPage" Spacing="14" Visibility="Collapsed">
                                 <TextBlock Text="Advanced / About" Style="{StaticResource GlassTitleTextStyle}" />
-                                <TextBlock Text="Glass Phase 3 product experience" />
+                                <TextBlock x:Name="VersionText" />
                                 <TextBlock Text="Local-first. No account. No telemetry." Style="{StaticResource GlassCaptionStyle}" />
+                                <ComboBox x:Name="RenderingQuality" Header="Rendering quality"
+                                          SelectionChanged="RenderingQuality_SelectionChanged">
+                                    <x:String>Auto</x:String><x:String>Full</x:String><x:String>Balanced</x:String>
+                                    <x:String>Reduced</x:String><x:String>Solid</x:String>
+                                </ComboBox>
+                                <ToggleSwitch x:Name="StartWithWindows" Header="Start Glass with Windows"
+                                              Toggled="StartWithWindows_Toggled" />
+                                <TextBlock x:Name="StartupStatus" Style="{StaticResource GlassCaptionStyle}" />
                                 <TextBlock x:Name="DiagnosticsText" TextWrapping="Wrap" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="Copy diagnostics" Click="CopyDiagnostics_Click" />
+                                    <Button Content="Export diagnostics" Click="ExportDiagnostics_Click" />
                                     <Button Content="Refresh applications" Click="RefreshApplications_Click" />
+                                    <Button x:Name="RestartButton" Content="Restart Glass" Click="Restart_Click" />
+                                    <Button Content="Restart in Safe Mode" Click="RestartSafeMode_Click" />
+                                    <Button Content="Reset Glass configuration" Click="ResetConfiguration_Click" />
                                     <Button Content="Exit Glass" Click="Exit_Click" />
                                 </StackPanel>
                             </StackPanel>

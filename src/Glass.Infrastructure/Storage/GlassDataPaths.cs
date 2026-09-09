@@ -24,6 +24,12 @@ public sealed class GlassDataPaths
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Glass"));
 
+    public static GlassDataPaths CreatePackaged(string packageLocalDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(packageLocalDirectory);
+        return new(Path.Combine(packageLocalDirectory, "Glass"));
+    }
+
     public void EnsureCreated()
     {
         Directory.CreateDirectory(StateDirectory);

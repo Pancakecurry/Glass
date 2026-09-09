@@ -7,6 +7,7 @@
         Background="Transparent"
         PointerEntered="Root_PointerEntered"
         PointerExited="Root_PointerExited"
+        KeyDown="Root_KeyDown"
         RightTapped="Root_RightTapped">
         <Border x:Name="SurfaceChrome" Margin="8" Padding="8">
             <Grid x:Name="SurfaceLayout">

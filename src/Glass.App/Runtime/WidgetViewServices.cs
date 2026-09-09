@@ -1,6 +1,7 @@
 using Glass.Core.Appearance;
 using Glass.Platform.Windows.Applications;
 using Glass.Platform.Windows.Audio;
+using Glass.Platform.Windows.Clipboard;
 using Glass.Platform.Windows.Location;
 using Glass.Platform.Windows.Media;
 using Glass.Platform.Windows.SystemStatus;
@@ -13,6 +14,7 @@ internal sealed record WidgetViewServices(
     SystemMetricsProvider Metrics,
     PowerStatusProvider Power,
     AudioEndpointService Audio,
+    ClipboardService Clipboard,
     ApplicationLaunchService Launcher,
     ShellIconService Icons,
     WindowsApplicationCatalog Applications,

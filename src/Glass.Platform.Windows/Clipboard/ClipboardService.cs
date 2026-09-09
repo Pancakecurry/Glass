@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using Glass.Platform.Windows.Windowing;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace Glass.Platform.Windows.Clipboard;
@@ -16,22 +15,29 @@ public sealed record ClipboardHistorySnapshot(
     ClipboardHistoryAvailability Availability,
     IReadOnlyList<string> TextItems);
 
-public sealed partial class ClipboardService : IDisposable
+public sealed class ClipboardService : IDisposable
 {
-    private const uint WmClipboardUpdate = 0x031D;
-    private readonly nint _hwnd;
-    private readonly IDisposable _messageRegistration;
+    private bool _started;
     private bool _disposed;
 
-    public ClipboardService(nint hwnd, NativeWindowMessageRouter messages)
+    public event EventHandler? Changed;
+
+    public ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
-        _hwnd = hwnd;
-        if (!AddClipboardFormatListener(hwnd))
-            throw new InvalidOperationException("AddClipboardFormatListener failed.");
-        _messageRegistration = messages.Register(WmClipboardUpdate, OnClipboardChanged);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_started) return ValueTask.CompletedTask;
+        global::Windows.ApplicationModel.DataTransfer.Clipboard.ContentChanged += OnClipboardChanged;
+        _started = true;
+        return ValueTask.CompletedTask;
     }
 
-    public event EventHandler? Changed;
+    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Stop();
+        return ValueTask.CompletedTask;
+    }
 
     public async ValueTask<string?> TryReadTextAsync()
     {
@@ -68,7 +74,12 @@ public sealed partial class ClipboardService : IDisposable
                     var text = await content.GetTextAsync();
                     if (!string.IsNullOrWhiteSpace(text)) items.Add(text);
                 }
-                catch { }
+                catch (Exception exception) when (exception is COMException or
+                    UnauthorizedAccessException)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Clipboard history item unavailable: {exception.Message}");
+                }
                 if (items.Count >= 20) break;
             }
             return new ClipboardHistorySnapshot(availability, items);
@@ -88,20 +99,17 @@ public sealed partial class ClipboardService : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _messageRegistration.Dispose();
-        _ = RemoveClipboardFormatListener(_hwnd);
+        Stop();
         Changed = null;
     }
 
-    private bool OnClipboardChanged(nuint wParam, nint lParam, out nint result)
+    private void Stop()
     {
-        Changed?.Invoke(this, EventArgs.Empty);
-        result = 0;
-        return true;
+        if (!_started) return;
+        global::Windows.ApplicationModel.DataTransfer.Clipboard.ContentChanged -= OnClipboardChanged;
+        _started = false;
     }
 
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)] private static partial bool AddClipboardFormatListener(nint hwnd);
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)] private static partial bool RemoveClipboardFormatListener(nint hwnd);
+    private void OnClipboardChanged(object? sender, object args) =>
+        Changed?.Invoke(this, EventArgs.Empty);
 }

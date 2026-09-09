@@ -16,14 +16,20 @@ public sealed record VolumeSnapshot(string Name, string RootPath, long TotalByte
 public sealed partial class SystemMetricsProvider : IAsyncDisposable
 {
     private readonly TimeProvider _timeProvider;
+    private readonly Func<TimeSpan> _samplingInterval;
     private CancellationTokenSource? _sampling;
     private Task? _samplingTask;
     private CpuTimes? _previousCpu;
     private NetworkTotals? _previousNetwork;
     private DateTimeOffset _previousNetworkAt;
 
-    public SystemMetricsProvider(TimeProvider? timeProvider = null) =>
+    public SystemMetricsProvider(
+        TimeProvider? timeProvider = null,
+        Func<TimeSpan>? samplingInterval = null)
+    {
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _samplingInterval = samplingInterval ?? (() => TimeSpan.FromSeconds(1));
+    }
 
     public string ProviderId => "systemMetrics";
     public SystemMetricsSnapshot? Current { get; private set; }
@@ -58,9 +64,14 @@ public sealed partial class SystemMetricsProvider : IAsyncDisposable
 
     private async Task SampleLoopAsync(CancellationToken token)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), _timeProvider);
-        Sample();
-        while (await timer.WaitForNextTickAsync(token).ConfigureAwait(false)) Sample();
+        while (!token.IsCancellationRequested)
+        {
+            Sample();
+            var interval = _samplingInterval();
+            if (interval < TimeSpan.FromMilliseconds(250))
+                interval = TimeSpan.FromMilliseconds(250);
+            await Task.Delay(interval, _timeProvider, token).ConfigureAwait(false);
+        }
     }
 
     private void Sample()

@@ -1,4 +1,5 @@
 using Glass.Platform.Windows.Audio;
+using Glass.Platform.Windows.Clipboard;
 using Glass.Platform.Windows.Media;
 using Glass.Platform.Windows.SystemStatus;
 using Glass.Widgets.Abstractions;
@@ -32,6 +33,9 @@ internal static class WidgetProviderAdapters
         new DelegatingWidgetProvider("media",
             token => new ValueTask(provider.StartAsync()),
             token => provider.StopAsync());
+
+    public static IWidgetProvider Clipboard(ClipboardService provider) =>
+        new DelegatingWidgetProvider("clipboard", provider.StartAsync, provider.StopAsync);
 
     public static IWidgetProvider Passive(string id) =>
         new DelegatingWidgetProvider(id,

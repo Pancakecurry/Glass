@@ -1,9 +1,10 @@
+using System.Runtime.InteropServices;
 using Glass.Core.Appearance;
+using Glass.Core.Runtime;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
-using Windows.UI.ViewManagement;
 
 namespace Glass.Rendering.Materials;
 
@@ -11,14 +12,13 @@ public enum GlassSurfaceRole { Bar, Widget, ControlCenter, Flyout }
 
 public sealed class GlassMaterialController
 {
-    private readonly AccessibilitySettings _accessibility = new();
-
     public void Apply(
         Window window,
         Border surface,
         MaterialSettings settings,
         ThemeMode themeMode,
-        GlassSurfaceRole role)
+        GlassSurfaceRole role,
+        RenderingPolicy? policy = null)
     {
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(surface);
@@ -30,7 +30,9 @@ public sealed class GlassMaterialController
             _ => ElementTheme.Default,
         };
 
-        var solid = _accessibility.HighContrast || settings.Preset == MaterialPreset.Solid;
+        var quality = policy?.Quality ?? RenderingQualityLevel.Balanced;
+        var solid = settings.Preset == MaterialPreset.Solid ||
+            quality == RenderingQualityLevel.Solid;
         try
         {
             window.SystemBackdrop = solid
@@ -39,8 +41,10 @@ public sealed class GlassMaterialController
                     ? new MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt }
                     : new DesktopAcrylicBackdrop();
         }
-        catch
+        catch (Exception exception) when (exception is InvalidOperationException or
+            NotSupportedException or COMException)
         {
+            System.Diagnostics.Debug.WriteLine($"Glass backdrop unavailable: {exception.Message}");
             solid = true;
             window.SystemBackdrop = null;
         }
@@ -57,8 +61,9 @@ public sealed class GlassMaterialController
         surface.BorderThickness = new Thickness(settings.BorderStrength <= 0 ? 0 : 1);
         surface.CornerRadius = new CornerRadius(settings.CornerRadius);
         surface.Opacity = settings.OverallOpacity;
-        surface.Shadow = settings.ShadowStrength > 0.02 ? new ThemeShadow() : null;
-        surface.Translation = settings.ShadowStrength > 0.02
+        var shadows = policy?.Shadows ?? true;
+        surface.Shadow = shadows && settings.ShadowStrength > 0.02 ? new ThemeShadow() : null;
+        surface.Translation = shadows && settings.ShadowStrength > 0.02
             ? new System.Numerics.Vector3(0, 0, (float)(12 + settings.ShadowStrength * 20))
             : System.Numerics.Vector3.Zero;
     }

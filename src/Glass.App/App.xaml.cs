@@ -1,4 +1,5 @@
 using Glass.App.Runtime;
+using Glass.Core.Runtime;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.UI.Xaml;
 
@@ -32,7 +33,13 @@ public partial class App : Application
 
         _registeredInstance = registered;
         _registeredInstance.Activated += OnRedirectedActivation;
-        _runtime = new ApplicationRuntime();
+        var arguments = args.Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToList();
+        if (current.GetActivatedEventArgs().Kind == ExtendedActivationKind.StartupTask)
+            arguments.Add("--windows-startup");
+        _runtime = new ApplicationRuntime(
+            StartupActivation.Parse(arguments),
+            RestartAsync);
         _runtime.ShutdownCompleted += OnShutdownCompleted;
         try
         {
@@ -50,7 +57,27 @@ public partial class App : Application
 
     private async void OnShutdownCompleted() => await ShutdownAsync();
 
+    private async Task RestartAsync(bool safeMode)
+    {
+        var executable = Environment.ProcessPath ??
+            throw new InvalidOperationException("Glass could not resolve its executable path.");
+        await ReleaseRuntimeAsync();
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = executable,
+            Arguments = safeMode ? "--safe-mode" : string.Empty,
+            UseShellExecute = true,
+        });
+        Exit();
+    }
+
     private async Task ShutdownAsync()
+    {
+        await ReleaseRuntimeAsync();
+        Exit();
+    }
+
+    private async Task ReleaseRuntimeAsync()
     {
         if (_registeredInstance is not null)
         {
@@ -65,7 +92,5 @@ public partial class App : Application
             await _runtime.DisposeAsync();
             _runtime = null;
         }
-
-        Exit();
     }
 }

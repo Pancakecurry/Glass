@@ -2,7 +2,8 @@
     x:Class="Glass.App.WidgetWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid x:Name="Root" Background="Transparent" RightTapped="Root_RightTapped">
+    <Grid x:Name="Root" Background="Transparent" KeyDown="Root_KeyDown"
+          RightTapped="Root_RightTapped">
         <Border x:Name="SurfaceChrome" Margin="8" Padding="4">
             <Grid>
                 <ContentControl x:Name="WidgetContent" />

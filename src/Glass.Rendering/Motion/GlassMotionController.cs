@@ -12,11 +12,12 @@ public sealed class GlassMotionController(
 {
     public MotionPreference Preference { get; set; } = preference;
     public bool SystemAnimationsEnabled { get; set; } = systemAnimationsEnabled;
+    public bool RuntimeAllowsFullMotion { get; set; } = true;
 
     public void AnimateScale(FrameworkElement element, MotionIntent intent, double? scale = null)
     {
         var visual = Prepare(element);
-        var spec = MotionPolicy.Resolve(intent, Preference, SystemAnimationsEnabled);
+        var spec = MotionPolicy.Resolve(intent, Preference, EffectiveAnimations);
         var target = (float)(scale ?? spec.Scale);
         if (spec.IsImmediate)
         {
@@ -44,7 +45,7 @@ public sealed class GlassMotionController(
     public void AnimateOpacity(FrameworkElement element, MotionIntent intent, float target)
     {
         var visual = Prepare(element);
-        var spec = MotionPolicy.Resolve(intent, Preference, SystemAnimationsEnabled);
+        var spec = MotionPolicy.Resolve(intent, Preference, EffectiveAnimations);
         if (spec.IsImmediate)
         {
             visual.Opacity = target;
@@ -62,7 +63,7 @@ public sealed class GlassMotionController(
         Vector3 target)
     {
         var visual = Prepare(element);
-        var spec = MotionPolicy.Resolve(intent, Preference, SystemAnimationsEnabled);
+        var spec = MotionPolicy.Resolve(intent, Preference, EffectiveAnimations);
         if (spec.IsImmediate)
         {
             visual.Offset = target;
@@ -89,7 +90,7 @@ public sealed class GlassMotionController(
         MagnificationMode mode,
         double configuredMaximum)
     {
-        var enabled = Preference != MotionPreference.Reduced && SystemAnimationsEnabled;
+        var enabled = Preference != MotionPreference.Reduced && EffectiveAnimations;
         var maximum = MotionPolicy.MagnificationScale(mode, configuredMaximum, enabled);
         for (var index = 0; index < items.Count; index++)
         {
@@ -108,6 +109,9 @@ public sealed class GlassMotionController(
     {
         foreach (var item in items) AnimateScale(item, MotionIntent.Hover, 1);
     }
+
+    private bool EffectiveAnimations =>
+        SystemAnimationsEnabled && RuntimeAllowsFullMotion;
 
     private static Visual Prepare(FrameworkElement element)
     {

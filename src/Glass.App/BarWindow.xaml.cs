@@ -10,6 +10,7 @@ using Glass.Platform.Windows.Windowing;
 using Glass.Shell.Surfaces;
 using Glass.Widgets.Abstractions;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -17,7 +18,9 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices;
 using Windows.UI;
+using Windows.UI.Core;
 
 namespace Glass.App;
 
@@ -30,6 +33,7 @@ public sealed partial class BarWindow : Window, IBarSurface
     private readonly ApplicationLaunchService _launcher;
     private readonly ProductSurfaceServices _services;
     private readonly List<FrameworkElement> _applicationElements = [];
+    private bool _fullscreenSuppressed;
     private bool _disposed;
 
     internal BarWindow(
@@ -59,6 +63,8 @@ public sealed partial class BarWindow : Window, IBarSurface
 
         _surfaceController = new BarSurfaceController(_nativeWindow, displays, definition);
         _surfaceController.DefinitionSettled += OnDefinitionSettled;
+        _surfaceController.ShellRecovered += OnShellRecovered;
+        _surfaceController.SystemActivityChanged += OnSystemActivityChanged;
         _autoHide.StateChanged += OnAutoHideStateChanged;
         _runningWindows.Changed += OnRunningWindowsChanged;
         _services.EditMode.Changed += OnEditModeChanged;
@@ -71,12 +77,14 @@ public sealed partial class BarWindow : Window, IBarSurface
     public bool IsVisible { get; private set; }
     public Exception? LastFailure => _surfaceController.LastFailure;
     public event EventHandler<BarDefinitionChangedEventArgs>? DefinitionSettled;
+    public event EventHandler? ShellRecovered;
+    public event Action<SystemActivityState>? SystemActivityChanged;
 
     public void Apply(BarDefinition definition)
     {
         definition = definition.Normalize();
         EditLabel.Text = $"{definition.Name} · Bar";
-        _autoHide.SetEnabled(definition.AutoHideEnabled);
+        _autoHide.SetEnabled(definition.AutoHideEnabled && !_services.SafeMode);
         _surfaceController.Apply(definition);
         ApplyOrientation(definition.Orientation);
         ApplyAppearance();
@@ -105,9 +113,14 @@ public sealed partial class BarWindow : Window, IBarSurface
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         IsVisible = visible;
-        if (visible) _nativeWindow.AppWindow.Show(false);
-        else WindowPositioner.Hide(_nativeWindow.Hwnd);
-        SetHostedWidgetsVisible(visible);
+        UpdateNativeVisibility();
+    }
+
+    public void SetFullscreenSuppressed(bool suppressed)
+    {
+        if (_fullscreenSuppressed == suppressed) return;
+        _fullscreenSuppressed = suppressed;
+        UpdateNativeVisibility();
     }
 
     public new void Close()
@@ -123,11 +136,15 @@ public sealed partial class BarWindow : Window, IBarSurface
         _autoHide.StateChanged -= OnAutoHideStateChanged;
         _runningWindows.Changed -= OnRunningWindowsChanged;
         _surfaceController.DefinitionSettled -= OnDefinitionSettled;
+        _surfaceController.ShellRecovered -= OnShellRecovered;
+        _surfaceController.SystemActivityChanged -= OnSystemActivityChanged;
         _services.EditMode.Changed -= OnEditModeChanged;
         SetHostedWidgetsVisible(false);
         _autoHide.Dispose();
         _surfaceController.Dispose();
         DefinitionSettled = null;
+        ShellRecovered = null;
+        SystemActivityChanged = null;
     }
 
     private void ApplyOrientation(BarOrientation orientation)
@@ -166,7 +183,8 @@ public sealed partial class BarWindow : Window, IBarSurface
         var settings = _services.Settings().Normalize();
         var material = AppearanceResolver.ForBar(settings, Id.Value);
         _services.Materials.Apply(this, SurfaceChrome, material,
-            settings.Appearance.ThemeMode, Glass.Rendering.Materials.GlassSurfaceRole.Bar);
+            settings.Appearance.ThemeMode, Glass.Rendering.Materials.GlassSurfaceRole.Bar,
+            _services.RenderingPolicy());
         SurfaceChrome.Padding = new Thickness(settings.Appearance.BarPadding);
         foreach (var panel in Panels()) panel.Spacing = settings.Appearance.ItemSpacing;
         var separated = Definition.VisualMode == BarVisualMode.Segmented;
@@ -206,7 +224,7 @@ public sealed partial class BarWindow : Window, IBarSurface
                         AddApplicationItem(panel, group.Identity, group, isPinned: false);
                     break;
                 case WidgetBarItem widget:
-                    AddWidget(panel, widget);
+                    if (!_services.SafeMode) AddWidget(panel, widget);
                     break;
                 case SpacerBarItem spacer:
                     panel.Children.Add(new Border
@@ -225,79 +243,6 @@ public sealed partial class BarWindow : Window, IBarSurface
         }
     }
 
-    private async void AddApplicationItem(
-        StackPanel panel,
-        ApplicationIdentity identity,
-        RunningApplicationGroup? group,
-        bool isPinned)
-    {
-        var productSettings = _services.Settings().Normalize();
-        var settings = productSettings.Appearance;
-        var taskbar = productSettings.Taskbar;
-        var displayName = _services.Applications.Current
-            .FirstOrDefault(application => application.Identity == identity)?.DisplayName ??
-            group?.DisplayName ?? Path.GetFileNameWithoutExtension(identity.Value);
-        var iconSize = settings.ApplicationIconSize;
-        var image = new Image { Width = iconSize, Height = iconSize, Stretch = Stretch.Uniform };
-        var fallback = new FontIcon { Glyph = "\uE8FC", FontSize = iconSize * 0.72 };
-        var iconHost = new Grid { Width = iconSize, Height = iconSize };
-        iconHost.Children.Add(fallback);
-        iconHost.Children.Add(image);
-        var indicator = new Border
-        {
-            Height = group?.IsActive == true ? 3 : 2,
-            Width = group is null ? 0 : group.Windows.Count > 1 ? 14 : 6,
-            CornerRadius = new CornerRadius(2),
-            Background = group?.IsActive == true
-                ? ResolveAccentBrush(settings)
-                : new SolidColorBrush(Color.FromArgb(180, 150, 160, 172)),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Visibility = taskbar.ShowRunningIndicators ? Visibility.Visible : Visibility.Collapsed,
-        };
-        var item = new StackPanel { Spacing = 2 };
-        item.Children.Add(iconHost);
-        item.Children.Add(indicator);
-        var button = new Button
-        {
-            Content = item,
-            Padding = new Thickness(6, 4, 6, 3),
-            MinWidth = iconSize + 12,
-            MinHeight = iconSize + 12,
-            CornerRadius = new CornerRadius(10),
-            Background = new SolidColorBrush(Colors.Transparent),
-        };
-        AutomationProperties.SetName(button, BuildAccessibleName(displayName, group, isPinned));
-        if (taskbar.ShowTooltips) ToolTipService.SetToolTip(button, displayName);
-        button.Click += (_, _) => Activate(identity, group, button);
-        button.ContextFlyout = ApplicationMenu(identity, group, isPinned);
-        button.PointerEntered += (_, _) =>
-        {
-            var index = _applicationElements.IndexOf(button);
-            _services.Motion.ApplyMagnification(_applicationElements, index,
-                settings.Magnification, settings.MagnificationMaximumScale);
-        };
-        button.PointerPressed += (_, _) =>
-            _services.Motion.AnimateScale(button, MotionIntent.Press);
-        button.PointerReleased += (_, _) =>
-            _services.Motion.AnimateScale(button, MotionIntent.Hover, 1);
-        _applicationElements.Add(button);
-        panel.Children.Add(button);
-
-        try
-        {
-            using var bitmap = _services.Icons.GetBitmap(identity, (int)iconSize,
-                WindowPositioner.GetDpi(_nativeWindow.Hwnd));
-            if (bitmap is not null)
-            {
-                var source = new SoftwareBitmapSource();
-                await source.SetBitmapAsync(bitmap);
-                image.Source = source;
-                fallback.Visibility = Visibility.Collapsed;
-            }
-        }
-        catch { }
-    }
-
     private void AddWidget(StackPanel panel, WidgetBarItem item)
     {
         if (!_services.WidgetRuntime.TryGet(
@@ -311,51 +256,6 @@ public sealed partial class BarWindow : Window, IBarSurface
         };
         host.ContextFlyout = WidgetMenu(item.WidgetInstanceId);
         panel.Children.Add(host);
-    }
-
-    private MenuFlyout ApplicationMenu(
-        ApplicationIdentity identity,
-        RunningApplicationGroup? group,
-        bool isPinned)
-    {
-        var flyout = new MenuFlyout();
-        var open = new MenuFlyoutItem { Text = group is null ? "Open" : "Activate" };
-        open.Click += (_, _) => Activate(identity, group, null);
-        flyout.Items.Add(open);
-        var newInstance = new MenuFlyoutItem { Text = "New instance" };
-        newInstance.Click += (_, _) => _launcher.Launch(identity);
-        flyout.Items.Add(newInstance);
-        flyout.Items.Add(new MenuFlyoutSeparator());
-        var pin = new MenuFlyoutItem { Text = isPinned ? "Unpin" : "Pin" };
-        pin.Click += async (_, _) =>
-        {
-            if (isPinned) await _services.Shell().UnpinApplicationAsync(Id, identity);
-            else await _services.Shell().PinApplicationAsync(Id, identity, BarZone.Center);
-        };
-        flyout.Items.Add(pin);
-        if (isPinned)
-        {
-            var moveEarlier = new MenuFlyoutItem { Text = "Move earlier" };
-            var moveLater = new MenuFlyoutItem { Text = "Move later" };
-            moveEarlier.Click += async (_, _) => await MoveApplicationAsync(identity, -1);
-            moveLater.Click += async (_, _) => await MoveApplicationAsync(identity, 1);
-            flyout.Items.Add(moveEarlier);
-            flyout.Items.Add(moveLater);
-        }
-        if (group is not null)
-        {
-            flyout.Items.Add(new MenuFlyoutSeparator());
-            var close = new MenuFlyoutItem { Text = "Close window" };
-            close.Click += (_, _) => _launcher.RequestClose(group.Windows[0]);
-            flyout.Items.Add(close);
-            if (group.Windows.Count > 1)
-            {
-                var closeAll = new MenuFlyoutItem { Text = "Close all windows" };
-                closeAll.Click += (_, _) => _launcher.RequestCloseAll(group.Windows);
-                flyout.Items.Add(closeAll);
-            }
-        }
-        return flyout;
     }
 
     private MenuFlyout WidgetMenu(Guid widgetId)
@@ -398,46 +298,6 @@ public sealed partial class BarWindow : Window, IBarSurface
         flyout.Items.Add(new MenuFlyoutSeparator());
         flyout.Items.Add(remove);
         return flyout;
-    }
-
-    private async ValueTask MoveApplicationAsync(ApplicationIdentity identity, int direction)
-    {
-        var content = Definition.Content;
-        var index = content.ToList().FindIndex(item =>
-            item is PinnedApplicationBarItem pin && pin.Application == identity);
-        if (index < 0) return;
-        var target = Math.Clamp(index + direction, 0, content.Count - 1);
-        await _services.Shell().MoveBarContentAsync(Id, index, target);
-    }
-
-    private void Activate(
-        ApplicationIdentity identity,
-        RunningApplicationGroup? group,
-        Button? anchor)
-    {
-        var preferences = _services.Settings().Taskbar;
-        if (group is null) _launcher.Launch(identity);
-        else if (group.Windows.Count == 1 && preferences.ActivateSingleWindowDirectly)
-            _launcher.ActivateOrToggle(group.Windows[0], preferences.ToggleForegroundWindowMinimize);
-        else if (anchor is not null) ShowWindowChooser(anchor, group);
-        else _launcher.ActivateOrToggle(group.Windows[0], preferences.ToggleForegroundWindowMinimize);
-    }
-
-    private void ShowWindowChooser(Button button, RunningApplicationGroup group)
-    {
-        var flyout = new MenuFlyout();
-        foreach (var window in group.Windows)
-        {
-            var item = new MenuFlyoutItem
-            {
-                Text = string.IsNullOrWhiteSpace(window.Title) ? group.DisplayName : window.Title,
-                Icon = window.IsForeground ? new FontIcon { Glyph = "\uE73E" } : null,
-            };
-            item.Click += (_, _) => _launcher.ActivateOrToggle(window,
-                _services.Settings().Taskbar.ToggleForegroundWindowMinimize);
-            flyout.Items.Add(item);
-        }
-        flyout.ShowAt(button);
     }
 
     private void Root_RightTapped(object sender, RightTappedRoutedEventArgs args)
@@ -496,6 +356,79 @@ public sealed partial class BarWindow : Window, IBarSurface
         args.Handled = true;
     }
 
+    private async void Root_KeyDown(object sender, KeyRoutedEventArgs args)
+    {
+        if (_services.EditMode.Selection is not { Kind: EditableSurfaceKind.Bar } selection ||
+            selection.Id != Id.Value) return;
+
+        if (args.Key == Windows.System.VirtualKey.Delete &&
+            _services.Shell().Layout.Bars.Count > 1)
+        {
+            args.Handled = true;
+            await _services.Shell().RemoveBarAsync(Id);
+            return;
+        }
+
+        var direction = args.Key switch
+        {
+            Windows.System.VirtualKey.Left => (-1d, 0d),
+            Windows.System.VirtualKey.Right => (1d, 0d),
+            Windows.System.VirtualKey.Up => (0d, -1d),
+            Windows.System.VirtualKey.Down => (0d, 1d),
+            _ => (0d, 0d),
+        };
+        if (direction == (0d, 0d)) return;
+
+        var coarse = (InputKeyboardSource.GetKeyStateForCurrentThread(
+            Windows.System.VirtualKey.Control) & CoreVirtualKeyStates.Down) != 0;
+        var resize = (InputKeyboardSource.GetKeyStateForCurrentThread(
+            Windows.System.VirtualKey.Shift) & CoreVirtualKeyStates.Down) != 0;
+        var delta = coarse ? 10d : 1d;
+        var updated = Definition;
+        if (resize)
+        {
+            var along = Definition.Orientation == BarOrientation.Horizontal
+                ? direction.Item1 : direction.Item2;
+            var across = Definition.Orientation == BarOrientation.Horizontal
+                ? direction.Item2 : direction.Item1;
+            updated = (Definition with
+            {
+                Length = Math.Max(96, Definition.Length + (along * delta)),
+                Thickness = Math.Max(32, Definition.Thickness + (across * delta)),
+            }).Normalize();
+        }
+        else if (Definition.Placement is Glass.Core.Placement.FloatingPlacement floating)
+        {
+            updated = Definition with
+            {
+                Placement = floating with
+                {
+                    Bounds = floating.Bounds with
+                    {
+                        X = floating.Bounds.X + (direction.Item1 * delta),
+                        Y = floating.Bounds.Y + (direction.Item2 * delta),
+                    },
+                },
+            };
+        }
+        else if (Definition.Placement is Glass.Core.Placement.AnchoredPlacement anchored)
+        {
+            var movement = Definition.Orientation == BarOrientation.Horizontal
+                ? direction.Item1 : direction.Item2;
+            updated = Definition with
+            {
+                Placement = anchored with
+                {
+                    AlongEdgeOffset = anchored.AlongEdgeOffset + (movement * delta),
+                },
+            };
+        }
+        else return;
+
+        args.Handled = true;
+        await _services.Shell().UpdateBarAsync(updated);
+    }
+
     private void Root_PointerEntered(object sender, PointerRoutedEventArgs args) =>
         _autoHide.PointerEntered();
 
@@ -523,6 +456,12 @@ public sealed partial class BarWindow : Window, IBarSurface
         DefinitionSettled?.Invoke(this, args);
     }
 
+    private void OnShellRecovered(object? sender, EventArgs args) =>
+        ShellRecovered?.Invoke(this, EventArgs.Empty);
+
+    private void OnSystemActivityChanged(SystemActivityState state) =>
+        SystemActivityChanged?.Invoke(state);
+
     private void OnRunningWindowsChanged(object? sender, EventArgs args) =>
         DispatcherQueue.TryEnqueue(RenderContent);
 
@@ -544,6 +483,14 @@ public sealed partial class BarWindow : Window, IBarSurface
         foreach (var widget in Definition.Content.OfType<WidgetBarItem>())
             _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
                 new WidgetInstanceId(widget.WidgetInstanceId), visible));
+    }
+
+    private void UpdateNativeVisibility()
+    {
+        var shown = IsVisible && !_fullscreenSuppressed;
+        if (shown) _nativeWindow.AppWindow.Show(false);
+        else WindowPositioner.Hide(_nativeWindow.Hwnd);
+        SetHostedWidgetsVisible(shown && _autoHide.State != AutoHideState.Hidden);
     }
 
     private static async Task ObserveAsync(ValueTask operation)

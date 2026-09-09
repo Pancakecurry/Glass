@@ -2,6 +2,7 @@ using Glass.Core.Persistence;
 using Glass.Core.Placement;
 using Glass.Core.Shell;
 using Glass.Platform.Windows.Displays;
+using Glass.Platform.Windows.Windowing;
 using Glass.Shell.Surfaces;
 
 namespace Glass.Shell.Runtime;
@@ -37,6 +38,10 @@ public sealed class ShellRuntime : IAsyncDisposable
     public event Action<Exception>? RuntimeFaulted;
 
     public event EventHandler? LayoutChanged;
+
+    public event EventHandler? ShellRecovered;
+
+    public event Action<SystemActivityState>? SystemActivityChanged;
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -369,6 +374,26 @@ public sealed class ShellRuntime : IAsyncDisposable
         }
     }
 
+    public void ApplyFullscreenSuppression(
+        FullscreenWindowSnapshot snapshot,
+        bool respectFullscreen)
+    {
+        EnsureInitialized();
+        foreach (var surface in _surfaces.Values)
+        {
+            var target = surface.Definition.Placement.Target.LastKnownBounds;
+            var display = snapshot.DisplayBounds;
+            var overlaps = Math.Max(target.X, display.X) <
+                    Math.Min(target.X + target.Width, display.X + display.Width) &&
+                Math.Max(target.Y, display.Y) <
+                    Math.Min(target.Y + target.Height, display.Y + display.Height);
+            var overlay = surface.Definition.Placement is not DockedPlacement &&
+                surface.Definition.ZOrder == SurfaceZOrder.AlwaysOnTop;
+            surface.SetFullscreenSuppressed(
+                respectFullscreen && snapshot.IsFullscreen && overlaps && overlay);
+        }
+    }
+
     public async ValueTask ResetAsync(CancellationToken cancellationToken = default)
     {
         EnsureInitialized();
@@ -410,12 +435,16 @@ public sealed class ShellRuntime : IAsyncDisposable
         _lifetime.Dispose();
         RuntimeFaulted = null;
         LayoutChanged = null;
+        ShellRecovered = null;
+        SystemActivityChanged = null;
     }
 
     private void CreateSurface(BarDefinition definition)
     {
         var surface = _surfaceFactory.Create(definition);
         surface.DefinitionSettled += OnDefinitionSettled;
+        surface.ShellRecovered += OnShellRecovered;
+        surface.SystemActivityChanged += OnSystemActivityChanged;
         _surfaces.Add(definition.Id, surface);
         if (surface.Definition != definition)
         {
@@ -440,9 +469,17 @@ public sealed class ShellRuntime : IAsyncDisposable
         }
 
         surface.DefinitionSettled -= OnDefinitionSettled;
+        surface.ShellRecovered -= OnShellRecovered;
+        surface.SystemActivityChanged -= OnSystemActivityChanged;
         surface.Close();
         surface.Dispose();
     }
+
+    private void OnShellRecovered(object? sender, EventArgs args) =>
+        ShellRecovered?.Invoke(this, EventArgs.Empty);
+
+    private void OnSystemActivityChanged(SystemActivityState state) =>
+        SystemActivityChanged?.Invoke(state);
 
     private async void OnDefinitionSettled(
         object? sender,

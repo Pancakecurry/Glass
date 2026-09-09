@@ -8,7 +8,7 @@ using Windows.Graphics;
 
 namespace Glass.Shell.Surfaces;
 
-public sealed class BarSurfaceController : IDisposable
+public sealed partial class BarSurfaceController : IDisposable
 {
     public const double SnapThreshold = 12;
     private const double RevealStrip = 2;
@@ -19,6 +19,10 @@ public sealed class BarSurfaceController : IDisposable
     private readonly IDisposable _enterSizeMoveRegistration;
     private readonly IDisposable _sizeMoveRegistration;
     private readonly IDisposable _dpiRegistration;
+    private readonly IDisposable _taskbarCreatedRegistration;
+    private readonly IDisposable _powerRegistration;
+    private readonly IDisposable _sessionRegistration;
+    private readonly uint _taskbarCreatedMessage;
     private bool _autoHidden;
     private bool _inUserMove;
     private bool _disposed;
@@ -42,6 +46,15 @@ public sealed class BarSurfaceController : IDisposable
         _dpiRegistration = _messages.Register(
             NativeWindowMessages.DpiChanged,
             OnDpiChanged);
+        _taskbarCreatedMessage = NativeWindowMessages.TaskbarCreated;
+        _taskbarCreatedRegistration = _messages.Register(
+            _taskbarCreatedMessage,
+            OnTaskbarCreated);
+        _powerRegistration = _messages.Register(
+            NativeWindowMessages.PowerBroadcast, OnPowerBroadcast);
+        _sessionRegistration = _messages.Register(
+            NativeWindowMessages.SessionChange, OnSessionChange);
+        _ = RegisterSessionNotifications(_window.Hwnd, 0);
     }
 
     public BarDefinition Definition { get; private set; }
@@ -51,6 +64,10 @@ public sealed class BarSurfaceController : IDisposable
     public Exception? LastFailure { get; private set; }
 
     public event EventHandler<BarDefinitionChangedEventArgs>? DefinitionSettled;
+
+    public event EventHandler? ShellRecovered;
+
+    public event Action<SystemActivityState>? SystemActivityChanged;
 
     public void Apply(BarDefinition definition)
     {
@@ -96,12 +113,18 @@ public sealed class BarSurfaceController : IDisposable
         }
 
         _disposed = true;
+        _ = UnregisterSessionNotification(_window.Hwnd);
+        _sessionRegistration.Dispose();
+        _powerRegistration.Dispose();
+        _taskbarCreatedRegistration.Dispose();
         _dpiRegistration.Dispose();
         _sizeMoveRegistration.Dispose();
         _enterSizeMoveRegistration.Dispose();
         _appBar.Dispose();
         _messages.Dispose();
         DefinitionSettled = null;
+        ShellRecovered = null;
+        SystemActivityChanged = null;
     }
 
     private void ApplyCurrentPlacement(uint? dpiOverride = null)
@@ -241,6 +264,55 @@ public sealed class BarSurfaceController : IDisposable
         result = 0;
         return true;
     }
+
+    private bool OnTaskbarCreated(nuint wParam, nint lParam, out nint result)
+    {
+        if (Definition.Placement is DockedPlacement && !_autoHidden)
+            _appBar.RecoverAfterShellRestart();
+        else
+            ApplyCurrentPlacement();
+        ShellRecovered?.Invoke(this, EventArgs.Empty);
+        result = 0;
+        return true;
+    }
+
+    private bool OnPowerBroadcast(nuint wParam, nint lParam, out nint result)
+    {
+        const nuint suspend = 0x0004;
+        const nuint resumeAutomatic = 0x0012;
+        if (wParam == suspend)
+            SystemActivityChanged?.Invoke(new(false, "suspend"));
+        else if (wParam == resumeAutomatic)
+        {
+            ApplyCurrentPlacement();
+            SystemActivityChanged?.Invoke(new(true, "resume"));
+        }
+        result = 0;
+        return false;
+    }
+
+    private bool OnSessionChange(nuint wParam, nint lParam, out nint result)
+    {
+        const nuint lockSession = 0x0007;
+        const nuint unlockSession = 0x0008;
+        if (wParam == lockSession)
+            SystemActivityChanged?.Invoke(new(false, "lock"));
+        else if (wParam == unlockSession)
+        {
+            ApplyCurrentPlacement();
+            SystemActivityChanged?.Invoke(new(true, "unlock"));
+        }
+        result = 0;
+        return false;
+    }
+
+    [System.Runtime.InteropServices.LibraryImport("wtsapi32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static partial bool RegisterSessionNotifications(nint window, uint flags);
+
+    [System.Runtime.InteropServices.LibraryImport("wtsapi32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static partial bool UnregisterSessionNotification(nint window);
 
     private bool OnEnterSizeMove(nuint wParam, nint lParam, out nint result)
     {

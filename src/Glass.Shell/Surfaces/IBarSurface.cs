@@ -7,6 +7,8 @@ public sealed class BarDefinitionChangedEventArgs(BarDefinition definition) : Ev
     public BarDefinition Definition { get; } = definition;
 }
 
+public sealed record SystemActivityState(bool IsActive, string Reason);
+
 public interface IBarSurface : IDisposable
 {
     BarId Id { get; }
@@ -19,11 +21,17 @@ public interface IBarSurface : IDisposable
 
     event EventHandler<BarDefinitionChangedEventArgs>? DefinitionSettled;
 
+    event EventHandler? ShellRecovered;
+
+    event Action<SystemActivityState>? SystemActivityChanged;
+
     void Apply(BarDefinition definition);
 
     ValueTask<BarDefinition> ReconcileDisplayAsync();
 
     void SetVisible(bool visible);
+
+    void SetFullscreenSuppressed(bool suppressed);
 
     void Close();
 }

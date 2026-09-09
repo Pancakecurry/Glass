@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace Glass.Platform.Windows.Windowing;
 
@@ -10,6 +11,19 @@ public static class NativeWindowMessages
     public const uint EnterSizeMove = 0x0231;
     public const uint ExitSizeMove = 0x0232;
     public const uint DpiChanged = 0x02E0;
+    public const uint PowerBroadcast = 0x0218;
+    public const uint SessionChange = 0x02B1;
+
+    public static uint TaskbarCreated { get; } = Register("TaskbarCreated");
+
+    private static uint Register(string name)
+    {
+        var message = RegisterWindowMessage(name);
+        return message != 0 ? message : throw new Win32Exception(Marshal.GetLastWin32Error());
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern uint RegisterWindowMessage(string name);
 }
 
 public sealed class NativeWindowMessageRouter : IDisposable

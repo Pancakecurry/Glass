@@ -1,6 +1,7 @@
 using Glass.App.Widgets;
 using Glass.Core.Appearance;
 using Glass.Core.Editing;
+using Glass.Core.Runtime;
 using Glass.Platform.Windows.Applications;
 using Glass.Rendering.Materials;
 using Glass.Rendering.Motion;
@@ -18,6 +19,8 @@ internal sealed record ProductSurfaceServices(
     WindowsApplicationCatalog Applications,
     GlassMaterialController Materials,
     GlassMotionController Motion,
+    Func<RenderingPolicy> RenderingPolicy,
+    bool SafeMode,
     EditModeSession EditMode,
     Action ShowControlCenter,
     Action SyncWidgetSurfaces);

@@ -42,6 +42,12 @@ public sealed partial class RunningWindowTracker : IDisposable
 
     public void RegisterGlassWindow(nint hwnd) => _glassWindows.Add(hwnd);
 
+    public void Refresh()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        PublishSnapshot();
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

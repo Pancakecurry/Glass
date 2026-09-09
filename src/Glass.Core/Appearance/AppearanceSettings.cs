@@ -14,6 +14,8 @@ public enum WidgetSurfaceDensity { Compact, Comfortable, Spacious }
 
 public enum BarVisualMode { Unified, Segmented, Minimal }
 
+public enum RenderingQualityPreference { Auto, Full, Balanced, Reduced, Solid }
+
 public sealed record MaterialSettings(
     MaterialPreset Preset,
     string TintColor,
@@ -116,6 +118,15 @@ public sealed record TaskbarInteractionSettings
     public bool ToggleForegroundWindowMinimize { get; init; } = true;
     public bool ShowRunningIndicators { get; init; } = true;
     public bool ShowTooltips { get; init; } = true;
+    public bool RespectFullscreenApplications { get; init; } = true;
+}
+
+public sealed record ProductBehaviorSettings
+{
+    public RenderingQualityPreference RenderingQuality { get; init; } =
+        RenderingQualityPreference.Auto;
+    public bool StartWithWindows { get; init; }
+    public bool OnboardingCompleted { get; init; }
 }
 
 public sealed record AppearancePresetDefinition(
@@ -135,6 +146,7 @@ public sealed record GlassSettings
 {
     public GlobalAppearanceSettings Appearance { get; init; } = new();
     public TaskbarInteractionSettings Taskbar { get; init; } = new();
+    public ProductBehaviorSettings Behavior { get; init; } = new();
     public IReadOnlyDictionary<Guid, MaterialOverride> BarAppearanceOverrides { get; init; } =
         new Dictionary<Guid, MaterialOverride>();
     public IReadOnlyDictionary<Guid, MaterialOverride> WidgetAppearanceOverrides { get; init; } =
@@ -145,6 +157,7 @@ public sealed record GlassSettings
     {
         Appearance = (Appearance ?? new GlobalAppearanceSettings()).Normalize(),
         Taskbar = Taskbar ?? new TaskbarInteractionSettings(),
+        Behavior = Behavior ?? new ProductBehaviorSettings(),
         BarAppearanceOverrides = NormalizeOverrides(BarAppearanceOverrides),
         WidgetAppearanceOverrides = NormalizeOverrides(WidgetAppearanceOverrides),
         CustomPresets = (CustomPresets ?? [])

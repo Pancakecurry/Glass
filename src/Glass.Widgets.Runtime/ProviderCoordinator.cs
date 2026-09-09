@@ -5,7 +5,11 @@ namespace Glass.Widgets.Runtime;
 public sealed class ProviderCoordinator : IAsyncDisposable
 {
     private readonly Dictionary<string, Entry> _providers = [];
+    private int _activeProviderCount;
     private bool _disposed;
+
+    public int RegisteredProviderCount => _providers.Count;
+    public int ActiveProviderCount => Volatile.Read(ref _activeProviderCount);
 
     public void Register(IWidgetProvider provider)
     {
@@ -37,9 +41,15 @@ public sealed class ProviderCoordinator : IAsyncDisposable
             else entry.VisibleConsumers.Remove(consumer);
             var isActive = entry.VisibleConsumers.Count > 0;
             if (!wasActive && isActive)
+            {
                 await entry.Provider.StartAsync(cancellationToken).ConfigureAwait(false);
+                Interlocked.Increment(ref _activeProviderCount);
+            }
             else if (wasActive && !isActive)
+            {
                 await entry.Provider.StopAsync(cancellationToken).ConfigureAwait(false);
+                Interlocked.Decrement(ref _activeProviderCount);
+            }
         }
         finally
         {
@@ -57,7 +67,10 @@ public sealed class ProviderCoordinator : IAsyncDisposable
             try
             {
                 if (entry.VisibleConsumers.Count > 0)
+                {
                     await entry.Provider.StopAsync().ConfigureAwait(false);
+                    Interlocked.Decrement(ref _activeProviderCount);
+                }
             }
             finally
             {

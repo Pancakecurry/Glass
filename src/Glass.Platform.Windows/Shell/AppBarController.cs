@@ -158,6 +158,17 @@ public sealed partial class AppBarController : IDisposable
         _ = ApplyPosition(_lastRequest);
     }
 
+    public void RecoverAfterShellRestart()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var request = _lastRequest;
+        if (request is null) return;
+        _registered = false;
+        Register();
+        _lastRequest = request;
+        _ = ApplyPosition(request);
+    }
+
     private bool OnAppBarMessage(nuint wParam, nint lParam, out nint result)
     {
         if ((uint)wParam == AbnPosChanged &&

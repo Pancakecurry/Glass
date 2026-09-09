@@ -8,9 +8,11 @@ using Glass.Platform.Windows.Displays;
 using Glass.Platform.Windows.Windowing;
 using Glass.Widgets.Abstractions;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Windows.UI.Core;
 
 namespace Glass.App;
 
@@ -24,6 +26,7 @@ public sealed partial class WidgetWindow : Window, IDisposable
     private readonly IDisposable _dpiRegistration;
     private bool _disposed;
     private bool _presented;
+    private bool _fullscreenSuppressed;
 
     internal WidgetWindow(
         WindowsDisplayService displays,
@@ -72,8 +75,7 @@ public sealed partial class WidgetWindow : Window, IDisposable
         {
             WidgetContent.Content = _services.WidgetViews.Create(runtime, _native.Hwnd);
             if (_presented)
-                _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
-                    new WidgetInstanceId(instance.WidgetInstanceId), true));
+                UpdateNativeVisibility();
         }
         OnEditModeChanged(this, EventArgs.Empty);
     }
@@ -81,9 +83,39 @@ public sealed partial class WidgetWindow : Window, IDisposable
     public void Present()
     {
         _presented = true;
-        _native.AppWindow.Show(false);
-        _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
-            new WidgetInstanceId(Instance.WidgetInstanceId), true));
+        UpdateNativeVisibility();
+    }
+
+    public void SetFullscreenSuppressed(bool suppressed)
+    {
+        if (_fullscreenSuppressed == suppressed) return;
+        _fullscreenSuppressed = suppressed;
+        UpdateNativeVisibility();
+    }
+
+    public StandaloneWidgetDefinition ReconcileDisplay()
+    {
+        var display = _displays.Resolve(Surface.Placement.Target);
+        var target = WindowsDisplayService.ToTarget(display);
+        if (Surface.Placement is FloatingPlacement floating)
+        {
+            var dpi = WindowPositioner.GetDpi(_native.Hwnd);
+            var work = new LogicalRect(
+                0,
+                0,
+                DpiConverter.ToLogical(display.WorkArea.Width, dpi),
+                DpiConverter.ToLogical(display.WorkArea.Height, dpi));
+            Surface = Surface with
+            {
+                Placement = floating with
+                {
+                    Target = target,
+                    Bounds = floating.Bounds.ClampInside(work),
+                },
+            };
+        }
+        ApplyPlacement(Surface.Placement, Surface.Size);
+        return Surface;
     }
 
     public void Dispose()
@@ -105,8 +137,18 @@ public sealed partial class WidgetWindow : Window, IDisposable
         var settings = _services.Settings().Normalize();
         var material = AppearanceResolver.ForWidget(settings, Instance.WidgetInstanceId);
         _services.Materials.Apply(this, SurfaceChrome, material,
-            settings.Appearance.ThemeMode, Glass.Rendering.Materials.GlassSurfaceRole.Widget);
+            settings.Appearance.ThemeMode, Glass.Rendering.Materials.GlassSurfaceRole.Widget,
+            _services.RenderingPolicy());
         EditOutline.CornerRadius = new CornerRadius(material.CornerRadius + 3);
+    }
+
+    private void UpdateNativeVisibility()
+    {
+        var visible = _presented && !_fullscreenSuppressed;
+        if (visible) _native.AppWindow.Show(false);
+        else WindowPositioner.Hide(_native.Hwnd);
+        _ = ObserveAsync(_services.WidgetRuntime.SetVisibleAsync(
+            new WidgetInstanceId(Instance.WidgetInstanceId), visible));
     }
 
     private void ApplyLockState()
@@ -235,6 +277,56 @@ public sealed partial class WidgetWindow : Window, IDisposable
         flyout.Items.Add(remove);
         flyout.ShowAt(Root, args.GetPosition(Root));
         args.Handled = true;
+    }
+
+    private async void Root_KeyDown(object sender, KeyRoutedEventArgs args)
+    {
+        if (_services.EditMode.Selection is not { Kind: EditableSurfaceKind.Widget } selection ||
+            selection.Id != Instance.WidgetInstanceId ||
+            Surface.Placement is not FloatingPlacement floating) return;
+
+        if (args.Key == Windows.System.VirtualKey.Delete)
+        {
+            args.Handled = true;
+            await _services.Shell().RemoveWidgetAsync(Instance.WidgetInstanceId);
+            _services.SyncWidgetSurfaces();
+            return;
+        }
+
+        var direction = args.Key switch
+        {
+            Windows.System.VirtualKey.Left => (-1d, 0d),
+            Windows.System.VirtualKey.Right => (1d, 0d),
+            Windows.System.VirtualKey.Up => (0d, -1d),
+            Windows.System.VirtualKey.Down => (0d, 1d),
+            _ => (0d, 0d),
+        };
+        if (direction == (0d, 0d)) return;
+
+        var coarse = (InputKeyboardSource.GetKeyStateForCurrentThread(
+            Windows.System.VirtualKey.Control) & CoreVirtualKeyStates.Down) != 0;
+        var resize = (InputKeyboardSource.GetKeyStateForCurrentThread(
+            Windows.System.VirtualKey.Shift) & CoreVirtualKeyStates.Down) != 0;
+        var delta = coarse ? 10d : 1d;
+        var bounds = resize
+            ? floating.Bounds with
+            {
+                Width = Math.Max(120, floating.Bounds.Width + (direction.Item1 * delta)),
+                Height = Math.Max(72, floating.Bounds.Height + (direction.Item2 * delta)),
+            }
+            : floating.Bounds with
+            {
+                X = floating.Bounds.X + (direction.Item1 * delta),
+                Y = floating.Bounds.Y + (direction.Item2 * delta),
+            };
+        Surface = Surface with
+        {
+            Placement = floating with { Bounds = bounds },
+            Size = new LogicalSize(bounds.Width, bounds.Height),
+        };
+        args.Handled = true;
+        ApplyPlacement(Surface.Placement, Surface.Size);
+        await _services.Shell().UpdateStandaloneWidgetAsync(Surface);
     }
 
     private void Resize(LogicalSize size)
