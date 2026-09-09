@@ -27,7 +27,11 @@ These rules apply to every future coding agent working in this repository.
 
 ## Phase discipline
 
-The active branch is bounded to Phase 2 application integration, trusted built-in widgets, and functional hosting. Do not begin the Phase 3 design system, final Control Center, Liquid Glass material engine, or final motion language. Development controls and functional widget surfaces are not a visual-design precedent.
+Phase 3 establishes the product experience, including the native material system,
+Control Center, Edit Mode, final application/widget presentation, and semantic
+motion. Do not begin Phase 4 packaging, updater, startup productization,
+benchmark campaign, release architecture matrix, or manual Windows hardening
+until Phase 3 has passed orchestrator review.
 
 Do not add browser mocks, Playwright, screenshot regression tests, screenshot-based QA infrastructure, shell emulators, fake monitor frameworks, or elaborate integration-test infrastructure.
 

@@ -4,7 +4,7 @@
 
 Glass is a native Windows shell-enhancement product, not an Explorer replacement. Its eventual experience centers on a freely positionable and resizable custom taskbar or dock, native desktop widgets, a sophisticated translucent material system, and high-quality motion. It must remain lightweight, local-first, private, and useful without an account or an internet connection.
 
-Phase 2 implements the initial functional application and Tier 0/Tier 1 widget scope. Final visual design, Liquid Glass, complete customization, premium motion, production packaging, and manual Windows hardening remain later phases.
+Phase 3 implements the native application/taskbar presentation, trusted Tier 0/Tier 1 widget views, centralized Glass materials, Control Center, in-place Edit Mode, appearance inheritance, and semantic motion. Production packaging, startup productization, benchmark campaigns, release architecture matrices, and final manual Windows hardening remain later phases.
 
 ## Initial release boundary
 

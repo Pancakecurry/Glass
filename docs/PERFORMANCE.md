@@ -6,7 +6,7 @@ Performance is a product requirement, not a later optimization pass. The eventua
 
 ## Initial aspirational budgets
 
-These are engineering goals, not claims that Phase 2 has achieved them:
+These are engineering goals, not claims that Phase 3 has achieved them:
 
 - Idle CPU below roughly 0.5 percent when realistically achievable.
 - Idle GPU effectively near zero.
@@ -52,3 +52,16 @@ No performance number in this document is a benchmark result. Phase 1 adds no te
 - Battery, audio, clipboard, display, and media state prefer operating-system events.
 - Weather requests are opt-in, serialized, conditionally cached, and isolated from shell startup.
 - HICON ownership is bounded and all owned handles are destroyed.
+
+## Phase 3 rendering and interaction
+
+- Each top-level surface has one native backdrop; nested blur surfaces are not created.
+- Material brushes are applied from centralized profiles rather than decorative update loops.
+- Hover, press, reveal, edit lift, and magnification use compositor transforms and opacity rather than layout animation.
+- Pointer-position work exists only while the pointer is inside the application region.
+- Widget providers are reference-counted by actual surface visibility, including bar auto-hide.
+- Application icons are cached by stable identity, requested at rendered size, and populated on demand.
+- Widget and application galleries populate only when their Control Center page is active. Later release hardening may strengthen incremental virtualization after measurement.
+- Weather remains explicit, serialized, cached, and absent from startup work.
+
+No Phase 3 budget is claimed as achieved until profiling on supported Windows hardware.

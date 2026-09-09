@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0A defines vocabulary and constraints, not finished visual design. The source of truth is design/tokens.json. Its values are restrained provisional defaults intended to give later work a shared shape while leaving extraordinary user customization possible.
+Phase 3 establishes the first production visual language. The source of truth is `design/tokens.json`; `Glass.Rendering` and the shared WinUI resource dictionary implement it. Values are curated defaults and semantic constraints, not a restriction on user customization.
 
 ## Product character
 
@@ -31,7 +31,7 @@ The visual system should avoid:
 - Crowded settings pages.
 - Arbitrary visual inconsistency.
 
-## Material principles
+## Material model
 
 Glass is a material system, not simply blur plus transparency. Future materials may combine:
 
@@ -47,6 +47,10 @@ Glass is a material system, not simply blur plus transparency. Future materials 
 
 Material parameters are user-customizable inputs with safe defaults and capability-adaptive fallbacks. A material is successful only when content remains legible, hierarchy remains clear, and the experience still feels coherent when expensive effects are reduced or removed.
 
+Top-level Glass surfaces are composed in this order: one native backdrop, controlled tint/luminosity, a translucent overlay, restrained edge light, semantic border, optional compositor shadow, then content. Clear, Frost, Smoke, Crystal, and Solid profiles share this model. Bars and widgets normally use Desktop Acrylic; Control Center may use Mica. High Contrast and restricted environments use the Solid path. Nested blur is forbidden.
+
+Appearance resolves through `global -> surface override -> widget-specific override`. Overrides are sparse and keyed by stable bar or widget IDs. Reset to Global removes the override instead of copying a full theme.
+
 ## Token rules
 
 - Feature code consumes semantic roles rather than hard-coded theme colors.
@@ -61,4 +65,4 @@ Material parameters are user-customizable inputs with safe defaults and capabili
 
 Surfaces should be composed with intentional depth and readable grouping. Controls should be discoverable without making every region a card. Settings should be organized around user goals and visible consequences rather than a wall of technical switches. Repeated patterns should use the same semantic tokens and interaction language.
 
-There is no Liquid Glass implementation in Phase 0A. Do not infer a final aesthetic from the development placeholder window.
+Shared styles define normal, hover, pressed, focus, selected, and disabled states. Segoe UI Variable is preferred with Windows fallbacks. Fluent/system glyphs identify Glass actions; application icons always remain the applications' own Shell icons. Normal product startup uses Control Center, bars, and widget surfaces—not the retained development diagnostics window.

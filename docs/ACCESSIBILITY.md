@@ -20,4 +20,4 @@ Accessibility is a product requirement and must be considered in every surface, 
 
 Later Windows work should validate keyboard traversal, focus visibility, automation names and roles, high contrast, text scaling, pointer and touch targets, reduced motion, multi-monitor DPI, and recovery from interrupted drag or resize operations.
 
-Phase 0A establishes the requirement only. It does not add an accessibility framework or claim runtime conformance.
+Phase 3 supplies keyboard-reachable native controls, visible theme focus treatment, accessible application names that include pinned/running/active/multi-window state, non-color running indicators, explicit move/attach actions, reduced-motion mapping, and a High Contrast solid material fallback. Runtime conformance, screen-reader traversal, text-scaling limits, and mixed-DPI interaction still require manual Windows validation.

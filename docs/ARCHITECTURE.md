@@ -32,14 +32,14 @@ The arrows describe allowed direction, not a request to add references preemptiv
 | Glass.Widgets.Abstractions | net10.0 | Minimal widget identity, metadata, sizing, capability, and instance-configuration contracts | None |
 | Glass.Widgets.Runtime | net10.0 | Explicit trusted registry, lifecycle, provider visibility, and per-instance state | Core, Widgets.Abstractions |
 | Glass.Platform.Windows | net10.0-windows10.0.17763.0 | HWND/AppWindow access, native messages, displays, DPI conversion, AppBar, and media sessions | Glass.Core, Microsoft.WindowsAppSDK |
-| Glass.Rendering | net10.0-windows10.0.17763.0 | Small Microsoft.UI.Composition animation proof; future materials and motion remain deferred | Microsoft.WindowsAppSDK |
+| Glass.Rendering | net10.0-windows10.0.17763.0 | Native top-level material controller and semantic Microsoft.UI.Composition motion | Glass.Core, Microsoft.WindowsAppSDK |
 | Glass.Shell | net10.0-windows10.0.17763.0 | Shell runtime, bar-surface lifecycle, placement, snapping integration, and auto-hide | Glass.Core, Glass.Platform.Windows, Glass.Rendering, Glass.Widgets.Abstractions |
 | Glass.Widgets.BuiltIn | net10.0 | Trusted first-party widget metadata and deterministic feature logic | Core, Widgets.Abstractions, Widgets.Runtime |
 | Glass.App | net10.0-windows10.0.17763.0 | WinUI executable, bootstrap, lifecycle, and top-level composition | All feature and contract projects |
 | Glass.Core.Tests | net10.0 | Small deterministic tests for Core | Glass.Core |
 | Glass.Infrastructure.Tests | net10.0 | Deterministic state-store, schema, and recovery tests | Glass.Core, Glass.Infrastructure |
 
-Phase 2 adds one application integration path and one trusted widget runtime. Platform.Windows owns Windows application, window, media, metrics, power, audio, and clipboard adapters. Widgets.Runtime never discovers code through reflection and is not a plugin SDK. The app remains the composition and WinUI host boundary.
+Phase 3 retains one application integration path and one trusted widget runtime. Platform.Windows owns Windows application, window, media, metrics, power, audio, clipboard, picker, and location adapters. Rendering owns the only material and semantic motion implementation. Widgets.Runtime never discovers code through reflection and is not a plugin SDK. The app remains the composition and WinUI host boundary.
 
 ## Allowed future edges
 
@@ -69,7 +69,7 @@ Core owns the state contracts and domain documents. Glass.Infrastructure impleme
 
 ## Application composition
 
-Glass.App explicitly composes `ApplicationRuntime`, the local stores, `WindowsDisplayService`, `ShellRuntime`, the bar-window factory, and the development controls window. `ApplicationRuntime` retains top-level ownership and coordinates deterministic shutdown. `ShellRuntime` owns bar definitions and active surface instances. App-instance redirection is handled with Windows App SDK `AppInstance`; reusable lifecycle and surface logic remains outside `App.xaml.cs`. Product-facing strings remain centralized in `Glass.App/Configuration/ProductBranding.cs`.
+Glass.App explicitly composes `ApplicationRuntime`, local stores, platform providers, `ProviderCoordinator`, `WidgetRuntime`, `ShellRuntime`, surface factories, and `ControlCenterWindow`. `ApplicationRuntime` retains top-level ownership and coordinates deterministic shutdown. `ShellRuntime` owns authoritative bar/widget definitions and active bar surfaces. App-instance redirection is handled with Windows App SDK `AppInstance`; reusable lifecycle and surface logic remains outside `App.xaml.cs`. Product-facing strings remain centralized in `Glass.App/Configuration/ProductBranding.cs`.
 
 ## Forbidden dependency edges
 
@@ -84,4 +84,4 @@ Glass.App explicitly composes `ApplicationRuntime`, the local stores, `WindowsDi
 
 ## Configuration policy
 
-global.json selects a .NET 10 SDK baseline with feature-band roll-forward. Directory.Build.props holds shared compiler and build defaults. Directory.Packages.props centrally pins the intentionally small package set. design/tokens.json is the provisional semantic source for future design-system work; it is not a compiled theme or a claim that visual values are final.
+global.json selects a .NET 10 SDK baseline with feature-band roll-forward. Directory.Build.props holds shared compiler and build defaults. Directory.Packages.props centrally pins the intentionally small package set. design/tokens.json is the Phase 3 semantic design source. `Glass.Rendering` and shared WinUI resources translate those semantics into native materials and controls; user settings remain sparse overrides rather than duplicated themes.

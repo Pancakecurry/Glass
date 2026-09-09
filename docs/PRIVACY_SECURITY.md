@@ -47,3 +47,12 @@ Phase 1 introduces no network, account, telemetry, authentication, arbitrary plu
 - Weather is disabled until the user supplies coordinates or explicitly grants one-shot location access. Requests go only to MET Norway over HTTPS, include a truthful product user agent, and use a bounded removable cache.
 - Application pins store stable application identity, not process IDs or window handles.
 - No widget uses arbitrary JavaScript, DLL loading, reflection discovery, accounts, telemetry, or cloud state.
+
+## Phase 3 presentation boundaries
+
+- Appearance, behavior, sparse surface overrides, and custom presets are versioned in local `settings.json`.
+- Edit Mode changes only local layout/settings state and never exposes surface contents externally.
+- Clipboard history is read from the Windows API on explicit widget interaction and is never copied into Glass state.
+- Weather location is either manually entered or requested once after the user presses Use device location; there is no automatic or background location request.
+- Notes and clipboard values are excluded from diagnostics and telemetry remains absent.
+- Materials, icons, and motion require no network access.

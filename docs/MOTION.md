@@ -23,10 +23,10 @@ Timing should describe intent such as quick feedback, standard state transition,
 
 Spring behavior is reserved for physical attachment and continuity. It must be tuned for control and readability, not used as decorative bounce.
 
-## Implementation boundary
+## Phase 3 implementation
 
-Future animation infrastructure belongs in Glass.Rendering and should use Microsoft.UI.Composition where that materially improves smoothness or reduces layout work. Shell and widget projects should request semantic transitions rather than duplicating animation recipes.
+`GlassMotionController` in Glass.Rendering maps semantic intents—hover, press, appear, dismiss, snap, reveal, auto-hide, surface lift, flyout, and widget transition—to compositor scale, translation, and opacity animations. Shell and app surfaces request an intent rather than duplicating animation recipes. Magnification changes transforms only while the pointer is over the application region and settles without a permanent animation loop.
 
 Reduced motion must be a first-class state. It should shorten or remove non-essential interpolation while preserving feedback, focus, object identity, and task completion. A global switch must not be the only consideration; the system should also avoid animating when a surface is invisible or occluded.
 
-Phase 0A does not implement a motion engine, visual-state system, animation scheduler, or motion QA harness.
+System, Full, and Reduced preferences resolve through `MotionPolicy`. Reduced mode removes magnification and overshoot, shortens non-essential transitions, and preserves state feedback. Windows runtime timing and high-refresh behavior still require manual hardware validation.
