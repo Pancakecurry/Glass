@@ -39,6 +39,18 @@ public sealed class BuiltInLogicTests
     }
 
     [Fact]
+    public void PomodoroUsesConfiguredDurations()
+    {
+        var time = new MutableTimeProvider(DateTimeOffset.UnixEpoch);
+        var pomodoro = new PomodoroTimer(time, new PomodoroOptions(
+            TimeSpan.FromMinutes(40), TimeSpan.FromMinutes(8), TimeSpan.FromMinutes(20)));
+
+        pomodoro.Start();
+
+        Assert.Equal(TimeSpan.FromMinutes(40), pomodoro.Timer.Remaining);
+    }
+
+    [Fact]
     public void ClockFallsBackToLocalForUnknownTimeZone()
     {
         var clock = new ClockModel(TimeProvider.System,

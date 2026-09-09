@@ -1,5 +1,6 @@
 using System.Globalization;
 using Glass.App.Runtime;
+using Glass.Core.Applications;
 using Glass.Platform.Windows.Clipboard;
 using Glass.Platform.Windows.Pickers;
 using Glass.Platform.Windows.Windowing;
@@ -300,13 +301,18 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         header.Children.Add(next);
         header.Children.Add(today);
         var grid = new Grid();
+        var selectedDate = Caption("No date selected");
         for (var i = 0; i < 7; i++) grid.ColumnDefinitions.Add(new ColumnDefinition());
         for (var i = 0; i < 6; i++) grid.RowDefinitions.Add(new RowDefinition());
         panel.Children.Add(header);
+        panel.Children.Add(selectedDate);
         panel.Children.Add(grid);
         void Refresh()
         {
             month.Text = instance.Model.DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+            selectedDate.Text = instance.Model.SelectedDate is { } selected
+                ? selected.ToString("D", CultureInfo.CurrentCulture)
+                : "No date selected";
             grid.Children.Clear();
             var first = instance.Model.DisplayedMonth;
             var offset = ((int)first.DayOfWeek - (int)instance.Model.FirstDayOfWeek + 7) % 7;
@@ -315,11 +321,17 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
                 var date = new DateOnly(first.Year, first.Month, day);
                 var button = new Button
                 {
-                    Content = day.ToString(CultureInfo.CurrentCulture),
+                    Content = instance.Model.SelectedDate == date
+                        ? $"{day} selected"
+                        : day.ToString(CultureInfo.CurrentCulture),
                     MinWidth = 32,
                     MinHeight = 32,
                     Padding = new Thickness(2),
                 };
+                AutomationProperties.SetName(button,
+                    instance.Model.SelectedDate == date
+                        ? $"{date:D}, selected"
+                        : date.ToString("D", CultureInfo.CurrentCulture));
                 button.Click += (_, _) => instance.Select(date);
                 Grid.SetColumn(button, (offset + day - 1) % 7);
                 Grid.SetRow(button, (offset + day - 1) / 7);
@@ -468,9 +480,28 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
     {
         var panel = Panel("Shortcuts");
         var list = new StackPanel { Spacing = 4 };
+        var addApplication = new Button { Content = "Add application", MinHeight = 36 };
         var addFile = new Button { Content = "Add file", MinHeight = 36 };
         var addFolder = new Button { Content = "Add folder", MinHeight = 36 };
         var picker = new OwnedPickerService(ownerWindow);
+        addApplication.Click += (_, _) =>
+        {
+            var flyout = new MenuFlyout();
+            IReadOnlyList<ApplicationDescriptor> applications;
+            try { applications = services.Applications.Refresh(); }
+            catch { applications = services.Applications.Current; }
+            foreach (var application in applications.Take(80))
+            {
+                var item = new MenuFlyoutItem { Text = application.DisplayName };
+                item.Click += async (_, _) => await instance.AddAsync(new ShortcutEntry(
+                    Guid.NewGuid(), application.DisplayName, ShortcutTargetKind.Application,
+                    application.Identity.ToString()));
+                flyout.Items.Add(item);
+            }
+            if (flyout.Items.Count == 0)
+                flyout.Items.Add(new MenuFlyoutItem { Text = "No applications found", IsEnabled = false });
+            flyout.ShowAt(addApplication);
+        };
         addFile.Click += async (_, _) =>
         {
             var path = await picker.PickFileAsync();
@@ -491,9 +522,22 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
                 var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
                 var exists = shortcut.Kind == ShortcutTargetKind.Application ||
                     File.Exists(shortcut.Target) || Directory.Exists(shortcut.Target);
-                var open = new Button { Content = exists ? shortcut.DisplayName : $"{shortcut.DisplayName} — missing", MinHeight = 36 };
+                var icon = new Image { Width = 24, Height = 24, Stretch = Stretch.Uniform };
+                var fallback = new FontIcon { Glyph = "\uE8B7", FontSize = 18 };
+                var iconHost = new Grid { Width = 24, Height = 24 };
+                iconHost.Children.Add(fallback);
+                iconHost.Children.Add(icon);
+                var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+                content.Children.Add(iconHost);
+                content.Children.Add(new TextBlock
+                {
+                    Text = exists ? shortcut.DisplayName : $"{shortcut.DisplayName} — missing",
+                    VerticalAlignment = VerticalAlignment.Center,
+                });
+                var open = new Button { Content = content, MinHeight = 36 };
                 open.IsEnabled = exists;
-                open.Click += (_, _) => services.Launcher.OpenPath(shortcut.Target);
+                open.Click += (_, _) => OpenShortcut(shortcut);
+                _ = LoadShortcutIconAsync(shortcut, icon, fallback);
                 var remove = Button("\uE74D", $"Remove {shortcut.DisplayName}");
                 remove.Click += async (_, _) => await instance.RemoveAsync(shortcut.ShortcutId);
                 row.Children.Add(open);
@@ -504,10 +548,43 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         instance.Updated += OnUpdated;
         panel.Unloaded += (_, _) => instance.Updated -= OnUpdated;
         panel.Children.Add(list);
-        panel.Children.Add(Actions(addFile, addFolder));
+        panel.Children.Add(Actions(addApplication, addFile, addFolder));
         Refresh();
         return panel;
         void OnUpdated(object? sender, EventArgs args) => panel.DispatcherQueue.TryEnqueue(Refresh);
+
+        void OpenShortcut(ShortcutEntry shortcut)
+        {
+            if (shortcut.Kind != ShortcutTargetKind.Application)
+            {
+                services.Launcher.OpenPath(shortcut.Target);
+                return;
+            }
+            var separator = shortcut.Target.IndexOf(':');
+            if (separator <= 0 || !Enum.TryParse<ApplicationIdentityKind>(
+                shortcut.Target[..separator], out var kind)) return;
+            services.Launcher.Launch(new ApplicationIdentity(kind, shortcut.Target[(separator + 1)..]));
+        }
+
+        async Task LoadShortcutIconAsync(ShortcutEntry shortcut, Image image, FontIcon fallback)
+        {
+            try
+            {
+                var identity = shortcut.Kind == ShortcutTargetKind.Application &&
+                    TryParseIdentity(shortcut.Target, out var parsed)
+                        ? parsed
+                        : new ApplicationIdentity(
+                            ApplicationIdentityKind.CanonicalExecutablePath, shortcut.Target);
+                using var bitmap = services.Icons.GetBitmap(
+                    identity, 24, WindowPositioner.GetDpi(ownerWindow));
+                if (bitmap is null) return;
+                var source = new SoftwareBitmapSource();
+                await source.SetBitmapAsync(bitmap);
+                image.Source = source;
+                fallback.Visibility = Visibility.Collapsed;
+            }
+            catch { }
+        }
     }
 
     private FrameworkElement Weather(WidgetInstanceConfiguration configuration)
@@ -690,6 +767,19 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
         settings.TryGetValue(key, out var value) &&
         double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
             ? parsed : fallback;
+
+    private static bool TryParseIdentity(string value, out ApplicationIdentity identity)
+    {
+        var separator = value.IndexOf(':');
+        if (separator > 0 && Enum.TryParse<ApplicationIdentityKind>(
+            value[..separator], out var kind))
+        {
+            identity = new ApplicationIdentity(kind, value[(separator + 1)..]);
+            return identity.IsValid;
+        }
+        identity = default;
+        return false;
+    }
     private static async Task SetImageAsync(Image image, byte[] data)
     {
         using var stream = new InMemoryRandomAccessStream();

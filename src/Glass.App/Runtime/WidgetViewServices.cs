@@ -15,6 +15,7 @@ internal sealed record WidgetViewServices(
     AudioEndpointService Audio,
     ApplicationLaunchService Launcher,
     ShellIconService Icons,
+    WindowsApplicationCatalog Applications,
     IWeatherProvider Weather,
     OneShotLocationService Location,
     Func<GlobalAppearanceSettings> Appearance);

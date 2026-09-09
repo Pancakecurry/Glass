@@ -59,8 +59,20 @@ public sealed class SemanticStopwatch(TimeProvider timeProvider)
 }
 
 public enum PomodoroPhase { Focus, ShortBreak, LongBreak }
-public sealed class PomodoroTimer(TimeProvider timeProvider)
+public sealed record PomodoroOptions(
+    TimeSpan Focus,
+    TimeSpan ShortBreak,
+    TimeSpan LongBreak)
 {
+    public static PomodoroOptions Default { get; } = new(
+        TimeSpan.FromMinutes(25), TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(15));
+}
+
+public sealed class PomodoroTimer(
+    TimeProvider timeProvider,
+    PomodoroOptions? configuredOptions = null)
+{
+    private readonly PomodoroOptions _options = configuredOptions ?? PomodoroOptions.Default;
     public PomodoroPhase Phase { get; private set; } = PomodoroPhase.Focus;
     public int CompletedFocusIntervals { get; private set; }
     public CountdownTimer Timer { get; } = new(timeProvider);
@@ -73,10 +85,10 @@ public sealed class PomodoroTimer(TimeProvider timeProvider)
             : PomodoroPhase.Focus;
         Timer.Start(DurationFor(Phase));
     }
-    private static TimeSpan DurationFor(PomodoroPhase phase) => phase switch
+    private TimeSpan DurationFor(PomodoroPhase phase) => phase switch
     {
-        PomodoroPhase.Focus => TimeSpan.FromMinutes(25),
-        PomodoroPhase.ShortBreak => TimeSpan.FromMinutes(5),
-        _ => TimeSpan.FromMinutes(15),
+        PomodoroPhase.Focus => _options.Focus,
+        PomodoroPhase.ShortBreak => _options.ShortBreak,
+        _ => _options.LongBreak,
     };
 }

@@ -93,7 +93,7 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
         BuiltInWidgetRegistration.RegisterAll(widgetRegistry, _providerCoordinator, widgetState);
         _widgetRuntime = new WidgetRuntime(widgetRegistry);
         var widgetViews = new BuiltInWidgetViewFactory(new WidgetViewServices(
-            _media, _metrics, _power, _audio, launcher, _icons, _weather,
+            _media, _metrics, _power, _audio, launcher, _icons, applications, _weather,
             new OneShotLocationService(), () => _settings.Current.Appearance));
         var editMode = new Glass.Core.Editing.EditModeSession();
 

@@ -283,6 +283,14 @@ public sealed partial class ControlCenterWindow : Window
                 WidgetSettingsPanel.Children.Add(SettingNumber(
                     "Longitude", "longitude", NumberValue(instance, "longitude", double.NaN), -180, 180));
                 break;
+            case "pomodoro":
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Focus minutes", "focusMinutes", NumberValue(instance, "focusMinutes", 25), 1, 180));
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Short break minutes", "shortBreakMinutes", NumberValue(instance, "shortBreakMinutes", 5), 1, 180));
+                WidgetSettingsPanel.Children.Add(SettingNumber(
+                    "Long break minutes", "longBreakMinutes", NumberValue(instance, "longBreakMinutes", 15), 1, 180));
+                break;
         }
         var save = new Button { Content = "Save instance settings", MinHeight = 36 };
         save.Click += SaveWidgetSettings_Click;

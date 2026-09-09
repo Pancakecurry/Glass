@@ -204,12 +204,21 @@ public sealed class StopwatchWidgetInstance : BuiltInWidgetInstanceBase
 
 public sealed class PomodoroWidgetInstance : BuiltInWidgetInstanceBase
 {
-    public PomodoroWidgetInstance(WidgetInstanceConfiguration configuration) : base(configuration) { }
-    public PomodoroTimer Pomodoro { get; } = new(TimeProvider.System);
+    public PomodoroWidgetInstance(WidgetInstanceConfiguration configuration) : base(configuration) =>
+        Pomodoro = new PomodoroTimer(TimeProvider.System, new PomodoroOptions(
+            TimeSpan.FromMinutes(ReadMinutes(configuration.Settings, "focusMinutes", 25)),
+            TimeSpan.FromMinutes(ReadMinutes(configuration.Settings, "shortBreakMinutes", 5)),
+            TimeSpan.FromMinutes(ReadMinutes(configuration.Settings, "longBreakMinutes", 15))));
+    public PomodoroTimer Pomodoro { get; }
     public void Start() { Pomodoro.Start(); Publish(); }
     public void Pause() { Pomodoro.Timer.Pause(); Publish(); }
     public void Reset() { Pomodoro.Timer.Reset(); Publish(); }
     public void Advance() { Pomodoro.Advance(); Publish(); }
+    private static double ReadMinutes(
+        IReadOnlyDictionary<string, string> settings, string key, double fallback) =>
+        settings.TryGetValue(key, out var value) &&
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            ? Math.Clamp(parsed, 1, 180) : fallback;
 }
 
 public sealed class CalculatorWidgetInstance(WidgetInstanceConfiguration configuration)
