@@ -50,6 +50,24 @@ public sealed class JsonGlassSettingsStoreTests : IDisposable
         Assert.Empty(loaded.BarAppearanceOverrides);
     }
 
+    [Fact]
+    public async Task SchemaOne_MigratesBehaviorWithSafeDefaults()
+    {
+        var paths = new GlassDataPaths(_root);
+        paths.EnsureCreated();
+        var state = new AtomicJsonStateStore(paths);
+        await state.WriteAsync("settings",
+            """{"schemaVersion":1,"payload":{"appearance":{"themeMode":"dark"}}}""",
+            TestContext.Current.CancellationToken);
+
+        var loaded = await new JsonGlassSettingsStore(state)
+            .LoadAsync(new GlassSettings(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(ThemeMode.Dark, loaded.Appearance.ThemeMode);
+        Assert.Equal(RenderingQualityPreference.Auto, loaded.Behavior.RenderingQuality);
+        Assert.True(loaded.Taskbar.RespectFullscreenApplications);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
