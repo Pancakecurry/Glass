@@ -41,12 +41,14 @@ public sealed class ClipboardService : IDisposable
 
     public async ValueTask<string?> TryReadTextAsync()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         var content = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
         return content.Contains(StandardDataFormats.Text) ? await content.GetTextAsync() : null;
     }
 
     public async ValueTask<ClipboardHistorySnapshot> TryReadHistoryAsync()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         try
         {
             var result = await global::Windows.ApplicationModel.DataTransfer.Clipboard
@@ -77,8 +79,8 @@ public sealed class ClipboardService : IDisposable
                 catch (Exception exception) when (exception is COMException or
                     UnauthorizedAccessException)
                 {
-                    System.Diagnostics.Debug.WriteLine(
-                        $"Clipboard history item unavailable: {exception.Message}");
+                    // History items can expire between enumeration and retrieval.
+                    _ = exception;
                 }
                 if (items.Count >= 20) break;
             }

@@ -6,6 +6,7 @@
     <RootNamespace>Glass.Shell</RootNamespace>
     <AssemblyName>Glass.Shell</AssemblyName>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

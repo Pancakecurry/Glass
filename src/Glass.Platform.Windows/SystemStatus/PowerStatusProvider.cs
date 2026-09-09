@@ -8,7 +8,6 @@ public sealed record PowerSnapshot(int? RemainingChargePercent, BatteryStatus St
 public sealed class PowerStatusProvider : IDisposable
 {
     private bool _started;
-    public string ProviderId => "power";
     public PowerSnapshot Current { get; private set; } = Read();
     public event Action<PowerSnapshot>? Changed;
 

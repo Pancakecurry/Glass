@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 using Glass.Core.Applications;
 
 namespace Glass.Platform.Windows.Applications;
@@ -9,6 +10,8 @@ public sealed partial class ApplicationLaunchService
     private const int SwRestore = 9;
     private const uint WmClose = 0x0010;
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "This instance facade is injected into product surfaces as one native launch service.")]
     public void Launch(ApplicationIdentity identity)
     {
         if (!identity.IsValid) throw new ArgumentException("A valid application identity is required.");
@@ -27,6 +30,8 @@ public sealed partial class ApplicationLaunchService
             throw new InvalidOperationException($"Windows could not launch '{target}'.");
     }
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "This instance facade is injected into product surfaces as one native launch service.")]
     public void ActivateOrToggle(
         RunningApplicationWindow window,
         bool minimizeForegroundWindow = true)
@@ -40,6 +45,8 @@ public sealed partial class ApplicationLaunchService
         _ = SetForegroundWindow(window.NativeWindow);
     }
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "This instance facade is injected into product surfaces as one native launch service.")]
     public void RequestClose(RunningApplicationWindow window) =>
         _ = PostMessage(window.NativeWindow, WmClose, 0, 0);
 
@@ -49,9 +56,13 @@ public sealed partial class ApplicationLaunchService
         foreach (var window in windows) RequestClose(window);
     }
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "This instance facade is injected into product surfaces as one native launch service.")]
     public void OpenSoundSettings() =>
         _ = ShellExecute(0, "open", "ms-settings:sound", null, null, SwShowNormal);
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "This instance facade is injected into product surfaces as one native launch service.")]
     public void OpenPath(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

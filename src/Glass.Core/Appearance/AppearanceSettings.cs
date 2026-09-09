@@ -167,7 +167,7 @@ public sealed record GlassSettings
             .ToArray(),
     };
 
-    private static IReadOnlyDictionary<Guid, MaterialOverride> NormalizeOverrides(
+    private static Dictionary<Guid, MaterialOverride> NormalizeOverrides(
         IReadOnlyDictionary<Guid, MaterialOverride>? source) =>
         (source ?? new Dictionary<Guid, MaterialOverride>())
             .Where(pair => pair.Key != Guid.Empty && pair.Value is not null && !pair.Value.IsEmpty)

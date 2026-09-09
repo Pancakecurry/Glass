@@ -1,4 +1,5 @@
 using Windows.Devices.Geolocation;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Glass.Platform.Windows.Location;
 
@@ -11,6 +12,8 @@ public sealed record OneShotLocationResult(
 
 public sealed class OneShotLocationService
 {
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "The instance service is injected as the explicit user-initiated location boundary.")]
     public async ValueTask<OneShotLocationResult> RequestAsync(
         CancellationToken cancellationToken = default)
     {

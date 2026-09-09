@@ -31,7 +31,6 @@ public sealed partial class SystemMetricsProvider : IAsyncDisposable
         _samplingInterval = samplingInterval ?? (() => TimeSpan.FromSeconds(1));
     }
 
-    public string ProviderId => "systemMetrics";
     public SystemMetricsSnapshot? Current { get; private set; }
     public event Action<SystemMetricsSnapshot>? Changed;
 
@@ -131,7 +130,7 @@ public sealed partial class SystemMetricsProvider : IAsyncDisposable
         return new NetworkTotals(received, sent);
     }
 
-    private static IReadOnlyList<VolumeSnapshot> ReadVolumes() => DriveInfo.GetDrives()
+    private static VolumeSnapshot[] ReadVolumes() => DriveInfo.GetDrives()
         .Where(drive => drive.IsReady)
         .Select(drive => new VolumeSnapshot(drive.VolumeLabel, drive.RootDirectory.FullName,
             drive.TotalSize, drive.AvailableFreeSpace)).ToArray();

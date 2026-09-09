@@ -1,4 +1,5 @@
 using Windows.ApplicationModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Glass.Platform.Windows.Runtime;
 
@@ -12,6 +13,8 @@ public sealed class PackagedStartupTaskService
 {
     public const string TaskId = "GlassStartup";
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "The instance service is injected as the packaged startup-task boundary.")]
     public async ValueTask<StartupTaskSnapshot> GetAsync()
     {
         if (!PackageIdentityService.IsPackaged)
@@ -20,6 +23,8 @@ public sealed class PackagedStartupTaskService
         return From(task.State);
     }
 
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "The instance service is injected as the packaged startup-task boundary.")]
     public async ValueTask<StartupTaskSnapshot> SetEnabledAsync(bool enabled)
     {
         if (!PackageIdentityService.IsPackaged)

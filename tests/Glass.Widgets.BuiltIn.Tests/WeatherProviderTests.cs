@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Glass.Core.Persistence;
+using Glass.Core.Product;
 using Glass.Widgets.BuiltIn.Weather;
 using Xunit;
 
@@ -14,10 +15,11 @@ public sealed class WeatherProviderTests
         var handler = new StubHandler();
         using var client = new HttpClient(handler);
         var store = new MemoryStore();
-        var provider = new MetNorwayWeatherProvider(client, store);
+        using var provider = new MetNorwayWeatherProvider(client, store);
         var location = new WeatherLocation(59.91, 10.75, "Oslo");
-        var first = await provider.GetAsync(location);
-        var second = await provider.GetAsync(location);
+        var token = TestContext.Current.CancellationToken;
+        var first = await provider.GetAsync(location, token);
+        var second = await provider.GetAsync(location, token);
         Assert.NotNull(first);
         Assert.NotNull(second);
         Assert.Equal(first.Location, second.Location);
@@ -38,7 +40,8 @@ public sealed class WeatherProviderTests
         {
             Requests++;
             Assert.Equal("api.met.no", request.RequestUri!.Host);
-            Assert.Contains("Glass/0.2", request.Headers.UserAgent.ToString());
+            Assert.Contains($"Glass/{ProductVersion.Current.Informational}",
+                request.Headers.UserAgent.ToString());
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("""

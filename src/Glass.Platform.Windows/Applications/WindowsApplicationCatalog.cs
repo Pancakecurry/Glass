@@ -19,7 +19,7 @@ public sealed class WindowsApplicationCatalog
     public IReadOnlyList<ApplicationDescriptor> Enumerate()
         => Refresh();
 
-    private static IReadOnlyList<ApplicationDescriptor> EnumerateCore()
+    private static ApplicationDescriptor[] EnumerateCore()
     {
         var applications = new Dictionary<ApplicationIdentity, ApplicationDescriptor>();
         var shellType = Type.GetTypeFromProgID("Shell.Application") ??

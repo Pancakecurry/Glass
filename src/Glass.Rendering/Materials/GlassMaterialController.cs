@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 using Glass.Core.Appearance;
 using Glass.Core.Runtime;
 using Microsoft.UI.Xaml;
@@ -12,6 +13,8 @@ public enum GlassSurfaceRole { Bar, Widget, ControlCenter, Flyout }
 
 public sealed class GlassMaterialController
 {
+    [SuppressMessage("Performance", "CA1822", Justification =
+        "The controller is the injected material boundary and will own cached resources after runtime validation.")]
     public void Apply(
         Window window,
         Border surface,

@@ -137,6 +137,9 @@ public sealed partial class RunningWindowTracker : IDisposable
         nint module, WinEventProcedure callback, uint processId, uint threadId, uint flags);
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)] private static extern bool UnhookWinEvent(nint hook);
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1838", Justification =
+        "The callback performs one bounded title read; replacing this stable interop signature would add unsafe buffer ownership.")]
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetWindowText(nint hwnd, StringBuilder text, int maximum);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint hwnd, out uint processId);
