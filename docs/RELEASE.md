@@ -20,8 +20,9 @@ Production release packaging is self-contained single-project MSIX. For an
 individual architecture:
 
 ```powershell
-dotnet publish src/Glass.App/Glass.App.csproj -c Release -r win-x64 `
+dotnet build src/Glass.App/Glass.App.csproj -c Release -r win-x64 `
   -p:Platform=x64 -p:GlassPackageMode=Packaged `
+  -p:GenerateAppxPackageOnBuild=true -p:UapAppxPackageBuildMode=SideloadOnly `
   -p:AppxPackageSigningEnabled=false
 ```
 

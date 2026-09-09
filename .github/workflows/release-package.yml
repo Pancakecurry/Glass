@@ -60,18 +60,23 @@ jobs:
         shell: pwsh
         run: |
           $project = [xml](Get-Content Directory.Build.props)
-          "GLASS_VERSION=$($project.Project.PropertyGroup.GlassPackageVersion)" | Out-File $env:GITHUB_ENV -Append
+          $versionGroup = @($project.Project.PropertyGroup |
+            Where-Object { $_.GlassPackageVersion })[0]
+          $version = ([string]$versionGroup.GlassPackageVersion).Trim()
+          "GLASS_VERSION=$version" | Out-File $env:GITHUB_ENV -Append
       - name: Restore architecture
         run: dotnet restore src/Glass.App/Glass.App.csproj --runtime ${{ matrix.rid }} --property:Platform=${{ matrix.platform }}
       - name: Build unsigned self-contained MSIX
         shell: pwsh
         run: >-
-          dotnet publish src/Glass.App/Glass.App.csproj
+          dotnet build src/Glass.App/Glass.App.csproj
           --configuration Release
           --runtime ${{ matrix.rid }}
           --no-restore
           --property:Platform=${{ matrix.platform }}
           --property:GlassPackageMode=Packaged
+          --property:GenerateAppxPackageOnBuild=true
+          --property:UapAppxPackageBuildMode=SideloadOnly
           --property:AppxPackageSigningEnabled=false
           --property:AppxPackagePublisher="$env:GLASS_PUBLISHER"
       - name: Locate architecture package
@@ -105,7 +110,10 @@ jobs:
         shell: pwsh
         run: |
           $project = [xml](Get-Content Directory.Build.props)
-          "GLASS_VERSION=$($project.Project.PropertyGroup.GlassPackageVersion)" | Out-File $env:GITHUB_ENV -Append
+          $versionGroup = @($project.Project.PropertyGroup |
+            Where-Object { $_.GlassPackageVersion })[0]
+          $version = ([string]$versionGroup.GlassPackageVersion).Trim()
+          "GLASS_VERSION=$version" | Out-File $env:GITHUB_ENV -Append
       - name: Create and validate MSIXBundle
         shell: pwsh
         run: |

@@ -16,9 +16,4 @@
     <GlassPackageVersion>0.9.0.0</GlassPackageVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
-    <!-- Descriptive underscore-separated test names are intentional and improve failure output. -->
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
-  </PropertyGroup>
-
 </Project>
