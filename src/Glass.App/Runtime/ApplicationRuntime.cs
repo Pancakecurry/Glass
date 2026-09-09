@@ -20,6 +20,7 @@ using Glass.Platform.Windows.Windowing;
 using Glass.Rendering.Materials;
 using Glass.Rendering.Motion;
 using Glass.Shell.Runtime;
+using Glass.Shell.Surfaces;
 using Glass.Widgets.Abstractions;
 using Glass.Widgets.BuiltIn;
 using Glass.Widgets.BuiltIn.Weather;
