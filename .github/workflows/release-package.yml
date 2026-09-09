@@ -36,6 +36,76 @@ jobs:
       - name: Test Built-in Widgets
         run: dotnet test tests/Glass.Widgets.BuiltIn.Tests/Glass.Widgets.BuiltIn.Tests.csproj --configuration Release --no-restore
 
+  portable:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Restore portable x64 runtime
+        run: dotnet restore src/Glass.App/Glass.App.csproj --runtime win-x64 --property:Platform=x64
+      - name: Build self-contained unpackaged application
+        shell: pwsh
+        run: >-
+          dotnet build src/Glass.App/Glass.App.csproj
+          --configuration Release
+          --runtime win-x64
+          --no-restore
+          --property:Platform=x64
+          --property:GlassPackageMode=Unpackaged
+          --property:WindowsPackageType=None
+          --property:SelfContained=true
+          --property:WindowsAppSDKSelfContained=true
+          --property:PublishSingleFile=false
+          --property:PublishTrimmed=false
+          --property:BaseOutputPath="$pwd\portable-bin\"
+      - name: Assemble portable archive
+        shell: pwsh
+        run: |
+          $executables = @(Get-ChildItem portable-bin -Recurse -Filter Glass.App.exe)
+          if ($executables.Count -ne 1) {
+            throw "Expected one Glass.App.exe; found $($executables.Count)."
+          }
+          $source = $executables[0].Directory.FullName
+          $requiredFiles = @(
+            'Glass.App.exe',
+            'Glass.App.dll',
+            'coreclr.dll',
+            'hostfxr.dll',
+            'Microsoft.UI.Xaml.dll',
+            'Microsoft.WindowsAppRuntime.Bootstrap.dll',
+            'resources.pri'
+          )
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path (Join-Path $source $file))) {
+              throw "Portable output is missing required file: $file"
+            }
+          }
+          New-Item portable-staging -ItemType Directory -Force | Out-Null
+          Copy-Item (Join-Path $source '*') portable-staging -Recurse
+          @'
+          1. Extract the full folder.
+          2. Run Glass.App.exe.
+          3. This is an unsigned RC build, so Windows SmartScreen may warn.
+          4. Packaged-only Start-with-Windows behavior is unavailable in portable mode.
+          5. If a package-identity-dependent optional feature is unavailable, Glass must degrade gracefully rather than crash.
+          '@ | Set-Content portable-staging/README.txt -Encoding ascii
+          $releaseLabel = if ('${{ github.ref_type }}' -eq 'tag') {
+            '${{ github.ref_name }}'.TrimStart('v')
+          } else {
+            '0.9.0-rc1'
+          }
+          New-Item portable-release -ItemType Directory -Force | Out-Null
+          Compress-Archive -Path portable-staging/* `
+            -DestinationPath "portable-release/Glass-$releaseLabel-win-x64-portable.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Glass-portable-win-x64
+          path: portable-release/*.zip
+          if-no-files-found: error
+
   package:
     needs: test
     runs-on: windows-latest
