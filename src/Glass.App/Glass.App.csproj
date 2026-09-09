@@ -13,6 +13,7 @@
     <GlassPackageMode Condition="'$(GlassPackageMode)' == ''">Unpackaged</GlassPackageMode>
     <WindowsPackageType Condition="'$(GlassPackageMode)' != 'Packaged'">None</WindowsPackageType>
     <WindowsPackageType Condition="'$(GlassPackageMode)' == 'Packaged'">MSIX</WindowsPackageType>
+    <EnableMsixTooling Condition="'$(GlassPackageMode)' == 'Packaged'">true</EnableMsixTooling>
     <WindowsAppSDKSelfContained Condition="'$(GlassPackageMode)' == 'Packaged'">true</WindowsAppSDKSelfContained>
     <SelfContained Condition="'$(GlassPackageMode)' == 'Packaged'">true</SelfContained>
     <RuntimeIdentifier Condition="'$(GlassPackageMode)' == 'Packaged' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>

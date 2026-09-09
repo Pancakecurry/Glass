@@ -8,7 +8,7 @@ public sealed class SessionHealthTests
     [Fact]
     public void RepeatedUncleanStarts_EventuallyEnterSafeMode()
     {
-        var now = DateTimeOffset.Parse("2026-09-09T00:00:00Z");
+        var now = new DateTimeOffset(2026, 9, 9, 0, 0, 0, TimeSpan.Zero);
         SessionHealthState state = new();
         SessionStartDecision decision = SessionHealthRules.Begin(state, now, false);
 
