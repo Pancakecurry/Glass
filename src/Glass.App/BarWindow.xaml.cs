@@ -31,7 +31,7 @@ public sealed partial class BarWindow : Window, IBarSurface
     private readonly List<FrameworkElement> _applicationElements = [];
     private bool _disposed;
 
-    public BarWindow(
+    internal BarWindow(
         WindowsDisplayService displays,
         RunningWindowTracker runningWindows,
         ApplicationLaunchService launcher,

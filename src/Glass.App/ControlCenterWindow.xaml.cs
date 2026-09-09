@@ -6,6 +6,7 @@ using Glass.Core.Editing;
 using Glass.Core.Geometry;
 using Glass.Core.Placement;
 using Glass.Core.Shell;
+using Glass.Platform.Windows.Applications;
 using Glass.Platform.Windows.Displays;
 using Glass.Platform.Windows.Windowing;
 using Glass.Shell.Runtime;
@@ -32,7 +33,7 @@ public sealed partial class ControlCenterWindow : Window
     private bool _loading = true;
     private bool _closing;
 
-    public ControlCenterWindow(
+    internal ControlCenterWindow(
         ShellRuntime shell,
         WindowsDisplayService displays,
         WindowsApplicationCatalog applications,

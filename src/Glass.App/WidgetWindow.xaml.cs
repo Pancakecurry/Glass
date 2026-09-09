@@ -24,7 +24,7 @@ public sealed partial class WidgetWindow : Window, IDisposable
     private readonly IDisposable _dpiRegistration;
     private bool _disposed;
 
-    public WidgetWindow(
+    internal WidgetWindow(
         WindowsDisplayService displays,
         ProductSurfaceServices services,
         StandaloneWidgetDefinition surface,
