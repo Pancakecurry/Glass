@@ -9,7 +9,6 @@ namespace Glass.App.Widgets;
 internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
 {
     private readonly SystemWidgetViews _system = new(services);
-    private readonly ProductivityWidgetViews _productivity = new();
     private readonly UtilityWidgetViews _utility = new(services);
 
     public FrameworkElement Create(IWidgetInstance instance, nint ownerWindow)
@@ -27,16 +26,16 @@ internal sealed class BuiltInWidgetViewFactory(WidgetViewServices services)
             "storage" => _system.Storage(single: true),
             "battery" => _system.Battery(),
             "audio" => _system.Audio(),
-            "calendar" => _productivity.Calendar((CalendarWidgetInstance)instance),
-            "timer" => _productivity.Timer((TimerWidgetInstance)instance),
-            "stopwatch" => _productivity.Stopwatch((StopwatchWidgetInstance)instance),
-            "calculator" => _productivity.Calculator((CalculatorWidgetInstance)instance),
-            "notes" => _productivity.Notes((NotesWidgetInstance)instance),
+            "calendar" => ProductivityWidgetViews.Calendar((CalendarWidgetInstance)instance),
+            "timer" => ProductivityWidgetViews.Timer((TimerWidgetInstance)instance),
+            "stopwatch" => ProductivityWidgetViews.Stopwatch((StopwatchWidgetInstance)instance),
+            "calculator" => ProductivityWidgetViews.Calculator((CalculatorWidgetInstance)instance),
+            "notes" => ProductivityWidgetViews.Notes((NotesWidgetInstance)instance),
             "clipboard" => _utility.Clipboard(),
             "storageUtility" => _system.Storage(single: false),
             "shortcuts" => _utility.Shortcuts((ShortcutsWidgetInstance)instance, ownerWindow),
             "weather" => _utility.Weather(instance.Configuration),
-            "pomodoro" => _productivity.Pomodoro((PomodoroWidgetInstance)instance),
+            "pomodoro" => ProductivityWidgetViews.Pomodoro((PomodoroWidgetInstance)instance),
             _ => WidgetViewPrimitives.Unavailable(
                 "Widget unavailable", "This built-in widget type is not registered."),
         };

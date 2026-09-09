@@ -197,7 +197,7 @@ internal sealed class SystemWidgetViews(WidgetViewServices services)
             panel.DispatcherQueue.TryEnqueue(() => Refresh(snapshot));
     }
 
-    private FrameworkElement MetricView(string title, string caption,
+    private StackPanel MetricView(string title, string caption,
         Func<Glass.Platform.Windows.SystemStatus.SystemMetricsSnapshot, string> format)
     {
         var panel = Metric(title, caption, out var value);

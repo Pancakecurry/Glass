@@ -106,7 +106,8 @@ public sealed partial class ControlCenterWindow : Window
     }
 
     private BarDefinition? SelectedBar =>
-        (BarList.SelectedItem as ListViewItem)?.Tag as BarDefinition ?? _shell.Layout.Bars.FirstOrDefault();
+        (BarList.SelectedItem as ListViewItem)?.Tag as BarDefinition ??
+        (_shell.Layout.Bars.Count > 0 ? _shell.Layout.Bars[0] : null);
 
     private WidgetMetadata? SelectedWidgetType =>
         (WidgetGallery.SelectedItem as ListViewItem)?.Tag as WidgetMetadata;

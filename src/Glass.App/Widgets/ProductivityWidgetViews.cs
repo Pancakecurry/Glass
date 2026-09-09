@@ -7,9 +7,9 @@ using static Glass.App.Widgets.WidgetViewPrimitives;
 
 namespace Glass.App.Widgets;
 
-internal sealed class ProductivityWidgetViews
+internal static class ProductivityWidgetViews
 {
-    public FrameworkElement Calendar(CalendarWidgetInstance instance)
+    public static FrameworkElement Calendar(CalendarWidgetInstance instance)
     {
         var panel = Panel("Calendar");
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -58,7 +58,7 @@ internal sealed class ProductivityWidgetViews
         void OnUpdated(object? sender, EventArgs args) => panel.DispatcherQueue.TryEnqueue(Refresh);
     }
 
-    public FrameworkElement Timer(TimerWidgetInstance instance)
+    public static FrameworkElement Timer(TimerWidgetInstance instance)
     {
         var panel = Panel("Timer");
         var remaining = Display("05:00");
@@ -84,7 +84,7 @@ internal sealed class ProductivityWidgetViews
         return panel;
     }
 
-    public FrameworkElement Stopwatch(StopwatchWidgetInstance instance)
+    public static FrameworkElement Stopwatch(StopwatchWidgetInstance instance)
     {
         var panel = Panel("Stopwatch");
         var elapsed = Display("00:00.0");
@@ -110,7 +110,7 @@ internal sealed class ProductivityWidgetViews
         return panel;
     }
 
-    public FrameworkElement Pomodoro(PomodoroWidgetInstance instance)
+    public static FrameworkElement Pomodoro(PomodoroWidgetInstance instance)
     {
         var panel = Panel("Pomodoro");
         var phase = Value(instance.Pomodoro.Phase.ToString());
@@ -135,7 +135,7 @@ internal sealed class ProductivityWidgetViews
         return panel;
     }
 
-    public FrameworkElement Calculator(CalculatorWidgetInstance instance)
+    public static FrameworkElement Calculator(CalculatorWidgetInstance instance)
     {
         var panel = Panel("Calculator");
         var expression = new TextBox { PlaceholderText = "Expression", MinHeight = 40 };
@@ -168,7 +168,7 @@ internal sealed class ProductivityWidgetViews
         return panel;
     }
 
-    public FrameworkElement Notes(NotesWidgetInstance instance)
+    public static FrameworkElement Notes(NotesWidgetInstance instance)
     {
         var panel = Panel("Quick Notes");
         var editor = new TextBox
