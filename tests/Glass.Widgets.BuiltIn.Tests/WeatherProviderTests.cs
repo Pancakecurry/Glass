@@ -19,7 +19,11 @@ public sealed class WeatherProviderTests
         var first = await provider.GetAsync(location);
         var second = await provider.GetAsync(location);
         Assert.NotNull(first);
-        Assert.Equal(first, second);
+        Assert.NotNull(second);
+        Assert.Equal(first.Location, second.Location);
+        Assert.Equal(first.ObservedAt, second.ObservedAt);
+        Assert.Equal(first.AirTemperatureCelsius, second.AirTemperatureCelsius);
+        Assert.Equal(first.Forecast.ToArray(), second.Forecast.ToArray());
         Assert.Equal(1, handler.Requests);
         Assert.Contains("MET Norway", first!.Attribution);
         Assert.Equal(4.5, first.HighTemperatureCelsius);
