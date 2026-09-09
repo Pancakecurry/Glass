@@ -111,6 +111,13 @@
                                             <Button Content="Fixed spacer" Click="AddFixedSpacer_Click" />
                                             <Button Content="Flexible spacer" Click="AddFlexibleSpacer_Click" />
                                         </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="Move selected to" VerticalAlignment="Center"
+                                                       Style="{StaticResource GlassCaptionStyle}" />
+                                            <Button Content="Start" Click="ContentToStart_Click" />
+                                            <Button Content="Center" Click="ContentToCenter_Click" />
+                                            <Button Content="End" Click="ContentToEnd_Click" />
+                                        </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <ComboBox x:Name="ApplicationSelector" Width="260" PlaceholderText="Choose application"
                                                       DropDownOpened="ApplicationSelector_DropDownOpened" />

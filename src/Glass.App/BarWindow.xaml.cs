@@ -377,9 +377,23 @@ public sealed partial class BarWindow : Window, IBarSurface
                 SurfaceZOrder.Normal);
             _services.SyncWidgetSurfaces();
         };
+        var moveToBar = new MenuFlyoutSubItem { Text = "Move to Bar" };
+        foreach (var bar in _services.Shell().Layout.Bars)
+        {
+            var barMenu = new MenuFlyoutSubItem { Text = bar.Name };
+            foreach (var zone in Enum.GetValues<BarZone>())
+            {
+                var destination = new MenuFlyoutItem { Text = zone.ToString() };
+                destination.Click += async (_, _) => await _services.Shell().MoveWidgetToBarAsync(
+                    widgetId, bar.Id, zone);
+                barMenu.Items.Add(destination);
+            }
+            moveToBar.Items.Add(barMenu);
+        }
         var remove = new MenuFlyoutItem { Text = "Remove" };
         remove.Click += async (_, _) => await _services.Shell().RemoveWidgetAsync(widgetId);
         flyout.Items.Add(customize);
+        flyout.Items.Add(moveToBar);
         flyout.Items.Add(detach);
         flyout.Items.Add(new MenuFlyoutSeparator());
         flyout.Items.Add(remove);

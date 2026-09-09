@@ -192,14 +192,19 @@ public sealed partial class WidgetWindow : Window, IDisposable
         var attach = new MenuFlyoutSubItem { Text = "Attach to Bar" };
         foreach (var bar in _services.Shell().Layout.Bars)
         {
-            var item = new MenuFlyoutItem { Text = bar.Name };
-            item.Click += async (_, _) =>
+            var barMenu = new MenuFlyoutSubItem { Text = bar.Name };
+            foreach (var zone in Enum.GetValues<BarZone>())
             {
-                await _services.Shell().MoveWidgetToBarAsync(
-                    Instance.WidgetInstanceId, bar.Id, BarZone.Center);
-                _services.SyncWidgetSurfaces();
-            };
-            attach.Items.Add(item);
+                var item = new MenuFlyoutItem { Text = zone.ToString() };
+                item.Click += async (_, _) =>
+                {
+                    await _services.Shell().MoveWidgetToBarAsync(
+                        Instance.WidgetInstanceId, bar.Id, zone);
+                    _services.SyncWidgetSurfaces();
+                };
+                barMenu.Items.Add(item);
+            }
+            attach.Items.Add(barMenu);
         }
         var duplicate = new MenuFlyoutItem { Text = "Duplicate" };
         duplicate.Click += async (_, _) =>

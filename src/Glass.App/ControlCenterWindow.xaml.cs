@@ -444,12 +444,24 @@ public sealed partial class ControlCenterWindow : Window
         await MoveSelectedContentAsync(-1);
     private async void ContentLater_Click(object sender, RoutedEventArgs args) =>
         await MoveSelectedContentAsync(1);
+    private async void ContentToStart_Click(object sender, RoutedEventArgs args) =>
+        await MoveSelectedContentToZoneAsync(BarZone.Start);
+    private async void ContentToCenter_Click(object sender, RoutedEventArgs args) =>
+        await MoveSelectedContentToZoneAsync(BarZone.Center);
+    private async void ContentToEnd_Click(object sender, RoutedEventArgs args) =>
+        await MoveSelectedContentToZoneAsync(BarZone.End);
     private async Task MoveSelectedContentAsync(int direction)
     {
         if (SelectedBar is not { } bar || BarContentList.SelectedIndex < 0) return;
         var from = BarContentList.SelectedIndex;
         var to = Math.Clamp(from + direction, 0, bar.Content.Count - 1);
         await RunAsync(async () => await _shell.MoveBarContentAsync(bar.Id, from, to));
+    }
+    private async Task MoveSelectedContentToZoneAsync(BarZone zone)
+    {
+        if (SelectedBar is not { } bar || BarContentList.SelectedIndex < 0) return;
+        var index = BarContentList.SelectedIndex;
+        await RunAsync(async () => await _shell.MoveBarContentAsync(bar.Id, index, index, zone));
     }
     private async void RemoveContent_Click(object sender, RoutedEventArgs args)
     {
