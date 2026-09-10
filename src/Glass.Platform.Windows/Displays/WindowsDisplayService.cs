@@ -8,11 +8,13 @@ namespace Glass.Platform.Windows.Displays;
 public sealed class WindowsDisplayService : IDisposable
 {
     private readonly DisplayAreaWatcher _watcher;
+    private readonly Action<string>? _writeDiagnostic;
     private DisplayInfo[] _displays = [];
     private bool _disposed;
 
-    public WindowsDisplayService()
+    public WindowsDisplayService(Action<string>? writeDiagnostic = null)
     {
+        _writeDiagnostic = writeDiagnostic;
         _watcher = DisplayArea.CreateWatcher();
         _watcher.Added += OnDisplayChanged;
         _watcher.Removed += OnDisplayChanged;
@@ -45,12 +47,47 @@ public sealed class WindowsDisplayService : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _displays = DisplayArea.FindAll()
+        _displays = GetDisplayAreaSnapshot()
             .Select(CreateDisplayInfo)
             .OrderByDescending(display => display.IsPrimary)
             .ThenBy(display => display.Bounds.X)
             .ThenBy(display => display.Bounds.Y)
             .ToArray();
+    }
+
+    private IReadOnlyList<DisplayArea> GetDisplayAreaSnapshot()
+    {
+        try
+        {
+            var areas = DisplayArea.FindAll();
+            var snapshot = new List<DisplayArea>(areas.Count);
+            for (var index = 0; index < areas.Count; index++)
+            {
+                snapshot.Add(areas[index]);
+            }
+
+            return snapshot;
+        }
+        catch (InvalidCastException)
+        {
+            TryWriteDiagnostic(
+                "DisplayArea.FindAll indexed access failed with InvalidCastException; " +
+                "using the primary display for this refresh.");
+            return [DisplayArea.Primary];
+        }
+    }
+
+    private void TryWriteDiagnostic(string message)
+    {
+        try
+        {
+            _writeDiagnostic?.Invoke(message);
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Display fallback diagnostic failed: {exception.GetType().Name}");
+        }
     }
 
     public DisplayInfo GetForWindow(WindowId windowId)

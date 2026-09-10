@@ -109,7 +109,8 @@ internal sealed class ApplicationRuntime : IAsyncDisposable
             new JsonGlassSettingsStore(stateStore, _diagnostics));
         await _settings.InitializeAsync(cancellationToken);
 
-        _displays = new WindowsDisplayService();
+        _displays = new WindowsDisplayService(message =>
+            _diagnosticWriter?.Enqueue("display", message));
         _runningWindows = new RunningWindowTracker();
         _icons = new ShellIconService();
         _interactionPreferences = new WindowsInteractionPreferences();
