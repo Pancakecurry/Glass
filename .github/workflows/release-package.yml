@@ -65,8 +65,6 @@ jobs:
           --property:GlassPackageMode=Unpackaged
           --property:GlassPortableBuild=true
           --property:WindowsPackageType=None
-          --property:WindowsAppSDKSelfContained=true
-          --property:SelfContained=true
           --property:EnableMsixTooling=true
           --property:PublishSingleFile=false
           --property:PublishTrimmed=false

@@ -4,7 +4,7 @@ using Glass.Core.Product;
 
 namespace Glass.App.Runtime;
 
-internal static partial class StartupFailureReporter
+internal static class StartupFailureReporter
 {
     private const uint MessageBoxOk = 0x00000000;
     private const uint MessageBoxIconError = 0x00000010;
@@ -78,6 +78,10 @@ internal static partial class StartupFailureReporter
         return builder.ToString();
     }
 
-    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
-    private static partial int MessageBoxW(nint window, string text, string caption, uint type);
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Interoperability",
+        "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute'",
+        Justification = "This best-effort startup fallback avoids requiring unsafe code in the WinUI application.")]
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern int MessageBoxW(nint window, string text, string caption, uint type);
 }
