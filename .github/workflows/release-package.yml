@@ -74,8 +74,7 @@ jobs:
             'coreclr.dll',
             'hostfxr.dll',
             'Microsoft.UI.Xaml.dll',
-            'Microsoft.WindowsAppRuntime.Bootstrap.dll',
-            'resources.pri'
+            'Microsoft.WindowsAppRuntime.Bootstrap.dll'
           )
           foreach ($file in $requiredFiles) {
             if (-not (Test-Path (Join-Path $source $file))) {
