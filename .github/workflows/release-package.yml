@@ -51,7 +51,6 @@ jobs:
           --property:Platform=x64
           --property:GlassPortableBuild=true
           --property:WindowsPackageType=None
-          --property:EnableMsixTooling=true
       - name: Publish self-contained unpackaged application
         shell: pwsh
         run: >-
@@ -65,7 +64,6 @@ jobs:
           --property:GlassPackageMode=Unpackaged
           --property:GlassPortableBuild=true
           --property:WindowsPackageType=None
-          --property:EnableMsixTooling=true
           --property:PublishSingleFile=false
           --property:PublishTrimmed=false
       - name: Smoke test portable startup
