@@ -22,6 +22,29 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        try
+        {
+            await LaunchAsync(args);
+        }
+        catch (Exception exception)
+        {
+            var logPath = StartupFailureReporter.TryWrite(exception);
+            StartupFailureReporter.TryShow(logPath);
+            try
+            {
+                await ShutdownAsync();
+            }
+            catch (Exception shutdownException)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"Glass shutdown after startup failure also failed: {shutdownException}");
+                Exit();
+            }
+        }
+    }
+
+    private async Task LaunchAsync(LaunchActivatedEventArgs args)
+    {
         var current = AppInstance.GetCurrent();
         var registered = AppInstance.FindOrRegisterForKey(InstanceKey);
         if (!registered.IsCurrent)
@@ -41,15 +64,7 @@ public partial class App : Application
             StartupActivation.Parse(arguments),
             RestartAsync);
         _runtime.ShutdownCompleted += OnShutdownCompleted;
-        try
-        {
-            await _runtime.StartAsync();
-        }
-        catch (Exception exception)
-        {
-            System.Diagnostics.Debug.WriteLine($"Glass startup failed: {exception}");
-            await ShutdownAsync();
-        }
+        await _runtime.StartAsync();
     }
 
     private void OnRedirectedActivation(object? sender, AppActivationArguments args) =>
