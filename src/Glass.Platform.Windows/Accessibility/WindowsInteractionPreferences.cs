@@ -1,3 +1,4 @@
+using Windows.Foundation.Metadata;
 using Windows.UI.ViewManagement;
 
 namespace Glass.Platform.Windows.Accessibility;
@@ -6,6 +7,7 @@ public sealed class WindowsInteractionPreferences : IDisposable
 {
     private readonly UISettings _settings = new();
     private readonly AccessibilitySettings _accessibility = new();
+    private readonly bool _animationsChangedAvailable;
 
     public bool AnimationsEnabled => _settings.AnimationsEnabled;
     public bool HighContrast => _accessibility.HighContrast;
@@ -13,20 +15,20 @@ public sealed class WindowsInteractionPreferences : IDisposable
 
     public WindowsInteractionPreferences()
     {
-        _settings.ColorValuesChanged += OnColorValuesChanged;
-        _accessibility.HighContrastChanged += OnHighContrastChanged;
+        // ColorValuesChanged and HighContrastChanged are unsupported in desktop apps.
+        _animationsChangedAvailable = ApiInformation.IsEventPresent(
+            "Windows.UI.ViewManagement.UISettings", "AnimationsEnabledChanged");
+        if (_animationsChangedAvailable)
+            _settings.AnimationsEnabledChanged += OnAnimationsChanged;
     }
 
     public void Dispose()
     {
-        _settings.ColorValuesChanged -= OnColorValuesChanged;
-        _accessibility.HighContrastChanged -= OnHighContrastChanged;
+        if (_animationsChangedAvailable)
+            _settings.AnimationsEnabledChanged -= OnAnimationsChanged;
         Changed = null;
     }
 
-    private void OnColorValuesChanged(UISettings sender, object args) =>
-        Changed?.Invoke(this, EventArgs.Empty);
-
-    private void OnHighContrastChanged(AccessibilitySettings sender, object args) =>
+    private void OnAnimationsChanged(UISettings sender, UISettingsAnimationsEnabledChangedEventArgs args) =>
         Changed?.Invoke(this, EventArgs.Empty);
 }

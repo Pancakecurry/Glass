@@ -11,12 +11,18 @@ public sealed partial class WindowsRenderingEnvironment : IDisposable
     private const int SmRemoteSession = 0x1000;
     private readonly UISettings _ui = new();
     private readonly AccessibilitySettings _accessibility = new();
+    private readonly bool _animationsChangedAvailable;
     private bool _disposed;
 
     public WindowsRenderingEnvironment()
     {
-        _ui.ColorValuesChanged += OnChanged;
-        _accessibility.HighContrastChanged += OnChanged;
+        // These supported events retain live effects/motion updates without the
+        // desktop-unsupported ColorValuesChanged and HighContrastChanged events.
+        _ui.AdvancedEffectsEnabledChanged += OnChanged;
+        _animationsChangedAvailable = ApiInformation.IsEventPresent(
+            "Windows.UI.ViewManagement.UISettings", "AnimationsEnabledChanged");
+        if (_animationsChangedAvailable)
+            _ui.AnimationsEnabledChanged += OnAnimationsChanged;
         PowerManager.EnergySaverStatusChanged += OnEnergySaverChanged;
     }
 
@@ -34,13 +40,16 @@ public sealed partial class WindowsRenderingEnvironment : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _ui.ColorValuesChanged -= OnChanged;
-        _accessibility.HighContrastChanged -= OnChanged;
+        _ui.AdvancedEffectsEnabledChanged -= OnChanged;
+        if (_animationsChangedAvailable)
+            _ui.AnimationsEnabledChanged -= OnAnimationsChanged;
         PowerManager.EnergySaverStatusChanged -= OnEnergySaverChanged;
         Changed = null;
     }
 
     private void OnChanged(object sender, object args) => Changed?.Invoke(this, EventArgs.Empty);
+    private void OnAnimationsChanged(UISettings sender, UISettingsAnimationsEnabledChangedEventArgs args) =>
+        Changed?.Invoke(this, EventArgs.Empty);
     private void OnEnergySaverChanged(object? sender, object args) => Changed?.Invoke(this, EventArgs.Empty);
 
     [LibraryImport("user32.dll")]
